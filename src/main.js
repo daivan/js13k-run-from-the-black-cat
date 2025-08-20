@@ -39,16 +39,19 @@ let blocks = [
   {x:2200, y:250, w:150, h:20},  // annan plattform
 ];
 
-// blink-logik för ögon
-let blinkTimer = 0;
-let blinkInterval = 2000 + Math.random()*2000;
+// Blink-state
 let blinking = false;
+let blinkCooldown = 1000 + Math.random()*2000; // ms till nästa blink
+let blinkDuration = 0;                          // ms kvar av själva blinket
+let lastTime = 0;                               // för dt-beräkning
+
 
 // ================================
 // === LOOP ===
 // ================================
 function loop() {
   requestAnimationFrame(loop);
+
 
   // timer
   timer -= 16;
@@ -94,9 +97,31 @@ function loop() {
   ctx.fillRect(0,0,c.width,c.height);
 
   // rita banan
-  ctx.fillStyle = "#444";
+  ctx.fillStyle = day ? "#8B4513" : "#303030ff"; 
   for (let b of blocks) {
     ctx.fillRect(b.x - camX, b.y, b.w, b.h);
+  }
+ 
+
+  // BLINK-LOGIK (bara på natten)
+  if (!day) {
+    if (blinking) {
+      blinkDuration -= 30;
+      if (blinkDuration <= 0) {
+        blinking = false;
+        blinkCooldown = 1500 + Math.random()*2000; // ny paus till nästa blink
+      }
+    } else {
+      blinkCooldown -= 10;
+      if (blinkCooldown <= 0) {
+        blinking = true;
+        blinkDuration = 180;
+      }
+    }
+  } else {
+    // ingen blink på dagen
+    blinking = false;
+    blinkDuration = 0;
   }
 
   // rita spelare
@@ -104,38 +129,39 @@ function loop() {
   ctx.fillRect(player.x - camX, player.y, player.w, player.h);
 
   // rita katt
-if (day) {
-  ctx.fillStyle = "black";
-  ctx.fillRect(cat.x - camX, cat.y, cat.w, cat.h);
-
-  ctx.fillStyle = "white";
-  ctx.font = "16px sans-serif";
-  ctx.fillText("Zzz", cat.x - camX, cat.y - 10);
-} else {
-  if (!blinking) {
+  if (day) {
     ctx.fillStyle = "black";
     ctx.fillRect(cat.x - camX, cat.y, cat.w, cat.h);
 
-    // ögon relativt kattens storlek
-    let eyeY = cat.y + cat.h/2;
-    let eyeX1 = cat.x - camX + cat.w*0.3;
-    let eyeX2 = cat.x - camX + cat.w*0.7;
-    let eyeR  = cat.h*0.20;  // ögonradie ~15% av kattens höjd
-    let pupilR = eyeR * 0.4;
-
-    ctx.fillStyle = "yellow";
-    ctx.beginPath();
-    ctx.arc(eyeX1, eyeY, eyeR, 0, Math.PI*2);
-    ctx.arc(eyeX2, eyeY, eyeR, 0, Math.PI*2);
-    ctx.fill();
-
+    ctx.fillStyle = "white";
+    ctx.font = "16px sans-serif";
+    ctx.fillText("Zzz", cat.x - camX, cat.y - 10);
+  } else {
     ctx.fillStyle = "black";
-    ctx.beginPath();
-    ctx.arc(eyeX1, eyeY, pupilR, 0, Math.PI*2);
-    ctx.arc(eyeX2, eyeY, pupilR, 0, Math.PI*2);
-    ctx.fill();
+    ctx.fillRect(cat.x - camX, cat.y, cat.w, cat.h);
+    
+    if (!blinking) {
+      // ögon relativt kattens storlek
+      let eyeY = cat.y + cat.h/2 - 20;
+      let eyeX1 = cat.x - camX + cat.w*0.3;
+      let eyeX2 = cat.x - camX + cat.w*0.7;
+      let eyeR  = cat.h*0.20;  // ögonradie ~15% av kattens höjd
+      let pupilR = eyeR * 0.4;
+
+      ctx.fillStyle = "yellow";
+      ctx.beginPath();
+      ctx.arc(eyeX1, eyeY, eyeR, 0, Math.PI*2);
+      ctx.arc(eyeX2, eyeY, eyeR, 0, Math.PI*2);
+      ctx.fill();
+
+      ctx.fillStyle = "black";
+      ctx.beginPath();
+      ctx.arc(eyeX1, eyeY, pupilR, 0, Math.PI*2);
+      ctx.arc(eyeX2, eyeY, pupilR, 0, Math.PI*2);
+      ctx.fill();
+    }
   }
-}
+
   // UI
   ctx.fillStyle = "white";
   ctx.font = "14px sans-serif";
