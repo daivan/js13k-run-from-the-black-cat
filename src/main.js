@@ -46,12 +46,13 @@ let blinkDuration = 0;                          // ms kvar av själva blinket
 let lastTime = 0;                               // för dt-beräkning
 
 
+
+
 // ================================
 // === LOOP ===
 // ================================
 function loop() {
   requestAnimationFrame(loop);
-
 
   // timer
   timer -= 16;
@@ -196,5 +197,34 @@ function loop() {
     ctx.font = "16px sans-serif";
     ctx.fillText("Tryck F5 för att starta om", c.width/2 - 100, c.height/2 + 30);
   }
+
+
+// ================================
+// === DRAW PROGRESS BAR ===
+// ================================
+
+const maxDistance = 5000;
+
+// spelaren
+let playerProgress = Math.min(player.x / maxDistance, 1);
+
+// katten
+let catProgress = Math.min(cat.x / maxDistance, 1);
+
+// bakgrund
+ctx.fillStyle = "#333";
+ctx.fillRect(20, 20, c.width - 40, 10);
+
+// spelaren (grön)
+ctx.fillStyle = "lime";
+ctx.fillRect(20, 20, (c.width - 40) * playerProgress, 10);
+
+// katten (röd, smalare ovanpå)
+ctx.fillStyle = "red";
+ctx.fillRect(20, 20, (c.width - 40) * catProgress, 10);
+
+// ram
+ctx.strokeStyle = "white";
+ctx.strokeRect(20, 20, c.width - 40, 10);
 }
 loop();
