@@ -13,17 +13,29 @@ let day = true;
 let timer = 10000;        // Start timer
 let dayLength = 10000;
 let nightLength = 20000;
-let player = {x:200, y:300, w:20, h:20, vy:0, onGround:false};
+
 let gravity = 0.5;
 let camX = 0;
 let gameState = "playing"; // "startMenu", "playing", "upgradeMenu", "gameOver", "win"
 const maxDistance = 5000;
 
 // ================================
+// === PLAYER ===
+// ================================
+let player = {
+  x:200,
+   y:300,
+   w:20,
+   h:20,
+   vy:0,
+   onGround:false
+};
+
+// ================================
 // === BLACK CAT ===
 // ================================
 let catHeight = c.height / 4;
-let cat = {x:0, y:250, w:catHeight, h:catHeight, speed:2, vy:0};
+let cat = {x:0, y:250, w:catHeight, h:catHeight, speed:1, vy:0};
 
 // Cat eyes blinking
 let blinking = false;
@@ -44,6 +56,14 @@ let blocks = [
   {x:1200, y:300, w:100, h:20},  // another platform
   {x:2200, y:250, w:50, h:20},  // another platform
   {x:2200, y:250, w:150, h:20},  // another platform
+];
+
+// ================================
+// === STONES ===
+// ================================
+let stones = [
+  {x:200, y:280, w:30, h:20, hp:5},
+  {x:350, y:280, w:30, h:20, hp:5}
 ];
 
 // ================================
@@ -112,7 +132,8 @@ function drawCat() {
       ctx.arc(eyeX2, eyeY, pupilR, 0, Math.PI*2);
       ctx.fill();
     }
-  }
+}
+
 }
 
 function drawPlayer() {
@@ -129,6 +150,16 @@ function drawPlattform() {
   ctx.fillStyle = day ? "#8B4513" : "#303030ff"; 
   for (let b of blocks) {
     ctx.fillRect(b.x - camX, b.y, b.w, b.h);
+  }
+
+  // stones
+  ctx.fillStyle = "gray";
+  for (let s of stones) {
+    ctx.fillRect(s.x, s.y, s.w, s.h);
+    // hp bar ovanpå stenen
+    ctx.fillStyle = "red";
+    ctx.fillRect(s.x, s.y-5, (s.w)*(s.hp/5), 3);
+    ctx.fillStyle = "gray";
   }
 }
 
@@ -196,9 +227,9 @@ function loop() {
     }
 
     // Player movement
-    if (keys["ArrowRight"]) player.x += 2;
-    if (keys["ArrowLeft"])  player.x -= 2;
-    if (keys[" "] && player.onGround) { player.vy = -8; player.onGround=false; }
+    if (keys["d"]) player.x += 2;
+    if (keys["a"])  player.x -= 2;
+    if (keys["w"] && player.onGround) { player.vy = -8; player.onGround=false; }
 
     // physics + collisions (player)
     player.vy += gravity;
@@ -216,6 +247,32 @@ function loop() {
       }
     }
 
+
+    // --- Interaction (space) ---
+  if(keys[" "]) {
+    for (let s of stones) {
+      if (
+        player.x + player.w > s.x - 10 &&
+        player.x < s.x + s.w + 10 &&
+        player.y + player.h > s.y - 10 &&
+        player.y < s.y + s.h + 10
+      ) {
+        if (!s.hitCooldown) {
+          s.hp--;
+          s.hitCooldown = 10; // frames delay så man inte spammar för snabbt
+        }
+      }
+    }
+    keys[" "] = false; // gör så att man måste släppa och trycka igen
+  }
+
+    // cooldown för stenar
+  for (let s of stones) {
+    if (s.hitCooldown) s.hitCooldown--;
+  }
+
+  // ta bort döda stenar
+  stones = stones.filter(s => s.hp > 0);
 
     // Night
     if (day === false) {
