@@ -16,7 +16,7 @@ let nightLength = 20000;
 let player = {x:200, y:300, w:20, h:20, vy:0, onGround:false};
 let gravity = 0.5;
 let camX = 0;
-let gameOver = false;
+let gameState = "playing"; // "startMenu", "playing", "upgradeMenu", "gameOver", "win"
 
 // ================================
 // === BLACK CAT ===
@@ -69,12 +69,12 @@ function loop() {
 
 
 
-  // input
+  // Player movement
   if (keys["ArrowRight"]) player.x += 2;
   if (keys["ArrowLeft"])  player.x -= 2;
   if (keys[" "] && player.onGround) { player.vy = -8; player.onGround=false; }
 
-  // fysik + kollisioner (spelare)
+  // physics + collisions (player)
   player.vy += gravity;
   player.y += player.vy;
   player.onGround = false;
@@ -90,20 +90,20 @@ function loop() {
     }
   }
 
-  // fysik + kollisioner (katt, förenklad)
+  // physics + collisions (cat, simplified)
   if (!day) {
     cat.x += cat.speed;
   }
 
-  // kamera följer spelaren
+  // camera follows player
   camX = player.x - c.width/2;
   if (camX < 0) camX = 0;
 
-  // rita bakgrund
+  // draw background
   ctx.fillStyle = day ? "#88d" : "#000";
   ctx.fillRect(0,0,c.width,c.height);
 
-  // rita banan
+  // draw ground
   ctx.fillStyle = day ? "#8B4513" : "#303030ff"; 
   for (let b of blocks) {
     ctx.fillRect(b.x - camX, b.y, b.w, b.h);
@@ -179,19 +179,19 @@ function loop() {
   // ================================
   // === COLLISION DETECTION ===
   // ================================
-  if (!day && !gameOver) {
+  if (!day && gameState === "playing") {
     if (player.x < cat.x + cat.w &&
         player.x + player.w > cat.x &&
         player.y < cat.y + cat.h &&
         player.y + player.h > cat.y) {
-      gameOver = true;
+      gameState = "gameOver";
     }
   }
 
   // ================================
   // === GAME OVER TEXT ===
   // ================================
-  if (gameOver) {
+  if (gameState === "gameOver") {
     ctx.fillStyle = "rgba(0,0,0,0.7)";
     ctx.fillRect(0,0,c.width,c.height);
 
