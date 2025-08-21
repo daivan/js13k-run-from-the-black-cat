@@ -46,6 +46,10 @@ let blocks = [
   {x:2200, y:250, w:150, h:20},  // another platform
 ];
 
+// ================================
+// === TRAPS ===
+// ================================
+let traps = [];
 
 // ================================
 // === KEYS ===
@@ -54,10 +58,25 @@ let keys = {};
 onkeydown = e => keys[e.key] = true;
 onkeyup   = e => keys[e.key] = false;
 
+document.addEventListener("keydown", e => {
+  if (day && e.key === "f") {
+    // lägg fälla på spelarens position (på marken)
+    traps.push({ x: player.x, y: c.height - 60, w: 15, h: 15, active: true });
+  }
+});
 
 // ================================
 // === DRAW PLAYING GAMESTATE ===
 // ================================
+function drawTraps() {
+  for (let t of traps) {
+    if (t.active) {
+      ctx.fillStyle = "orange";
+      ctx.fillRect(t.x - camX, t.y, t.w, t.h);
+    }
+  }
+}
+
 function drawCat() {
   // Day
   if (day === true) {
@@ -205,7 +224,24 @@ function loop() {
       // Cat
 
       // Cat movement
-      cat.x += cat.speed;
+ // Cat vs traps
+for (let t of traps) {
+  if (t.active &&
+      cat.x < t.x + t.w &&
+      cat.x + cat.w > t.x &&
+      cat.y < t.y + t.h &&
+      cat.y + cat.h > t.y) {
+    t.active = false;                // fällan används upp
+    cat.stunnedUntil = Date.now() + 3000; // katten stannar i 3 sek
+  }
+}
+
+// stoppa katten om stunned
+if (cat.stunnedUntil && Date.now() < cat.stunnedUntil) {
+  // katten rör sig inte
+} else {
+  cat.x += cat.speed;
+}
 
       // Cat blinking
       if (blinking) {
@@ -251,6 +287,8 @@ function loop() {
     drawCat();
 
     drawPlayer();
+
+    drawTraps();
 
     // UI
     drawUI();
