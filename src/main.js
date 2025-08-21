@@ -6,12 +6,6 @@ const ctx = c.getContext("2d");
 c.width = 800;
 c.height = 400;
 
-let keys = {};
-onkeydown = e => keys[e.key] = true;
-onkeyup   = e => keys[e.key] = false;
-
-let gameOver = false;
-
 // ================================
 // === GAME STATE ===
 // ================================
@@ -20,32 +14,44 @@ let timer = 10000;        // starta med dag (50 sek)
 let dayLength = 10000;
 let nightLength = 20000;
 let player = {x:200, y:300, w:20, h:20, vy:0, onGround:false};
+let gravity = 0.5;
+let camX = 0;
+let gameOver = false;
 
-// katten nu mycket större
+// ================================
+// === BLACK CAT ===
+// ================================
 let catHeight = c.height / 4;
 let cat = {x:0, y:250, w:catHeight, h:catHeight, speed:1, vy:0};
 
-let gravity = 0.5;
-let camX = 0;
+// Cat eyes blinking
+let blinking = false;
+let blinkCooldown = 1000 + Math.random()*2000; // ms to next blink
+let blinkDuration = 0;                          // ms left of the blink
+let lastTime = 0;                               // for dt calculation
 
-// enkel bana: lista med block (x,y,w,h)
+
+// ================================
+// === MAP ===
+// ================================
+// (x,y,w,h)
 let blocks = [
-  {x:0, y:350, w:20000, h:50},   // marken
-  {x:300, y:300, w:100, h:20},  // liten plattform
-  {x:500, y:250, w:100, h:20},  // högre plattform
-  {x:800, y:300, w:150, h:20},  // annan plattform
-  {x:1200, y:300, w:100, h:20},  // annan plattform
-  {x:2200, y:250, w:50, h:20},  // annan plattform
-  {x:2200, y:250, w:150, h:20},  // annan plattform
+  {x:0, y:350, w:20000, h:50},   // ground
+  {x:300, y:300, w:100, h:20},  // small platform
+  {x:500, y:250, w:100, h:20},  // higher platform
+  {x:800, y:300, w:150, h:20},  // another platform
+  {x:1200, y:300, w:100, h:20},  // another platform
+  {x:2200, y:250, w:50, h:20},  // another platform
+  {x:2200, y:250, w:150, h:20},  // another platform
 ];
 
-// Blink-state
-let blinking = false;
-let blinkCooldown = 1000 + Math.random()*2000; // ms till nästa blink
-let blinkDuration = 0;                          // ms kvar av själva blinket
-let lastTime = 0;                               // för dt-beräkning
 
-
+// ================================
+// === KEYS ===
+// ================================
+let keys = {};
+onkeydown = e => keys[e.key] = true;
+onkeyup   = e => keys[e.key] = false;
 
 
 // ================================
@@ -227,4 +233,9 @@ ctx.fillRect(20, 20, (c.width - 40) * catProgress, 10);
 ctx.strokeStyle = "white";
 ctx.strokeRect(20, 20, c.width - 40, 10);
 }
+
+
+// ================================
+// === START ===
+// ================================
 loop();
