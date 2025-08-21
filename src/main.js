@@ -10,7 +10,7 @@ c.height = 400;
 // === GAME STATE ===
 // ================================
 let day = true;
-let timer = 10000;        // starta med dag (50 sek)
+let timer = 10000;        // Start timer
 let dayLength = 10000;
 let nightLength = 20000;
 let player = {x:200, y:300, w:20, h:20, vy:0, onGround:false};
@@ -23,7 +23,7 @@ const maxDistance = 5000;
 // === BLACK CAT ===
 // ================================
 let catHeight = c.height / 4;
-let cat = {x:0, y:250, w:catHeight, h:catHeight, speed:1, vy:0};
+let cat = {x:0, y:250, w:catHeight, h:catHeight, speed:2, vy:0};
 
 // Cat eyes blinking
 let blinking = false;
@@ -222,7 +222,6 @@ function loop() {
         }
       }
 
-
       // Cat + player collision (GameOver)
       if (player.x < cat.x + cat.w &&
           player.x + player.w > cat.x &&
@@ -234,12 +233,9 @@ function loop() {
 
     // Day
     if (day === true) {
-
       // Cat
       blinking = false;
       blinkDuration = 0;
-
-  
     }
        
     // camera logic
@@ -253,7 +249,7 @@ function loop() {
     drawPlattform();
 
     drawCat();
-    
+
     drawPlayer();
 
     // UI
