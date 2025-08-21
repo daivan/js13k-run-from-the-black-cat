@@ -17,6 +17,7 @@ let player = {x:200, y:300, w:20, h:20, vy:0, onGround:false};
 let gravity = 0.5;
 let camX = 0;
 let gameState = "playing"; // "startMenu", "playing", "upgradeMenu", "gameOver", "win"
+const maxDistance = 5000;
 
 // ================================
 // === BLACK CAT ===
@@ -57,16 +58,83 @@ onkeyup   = e => keys[e.key] = false;
 // ================================
 // === DRAW PLAYING GAMESTATE ===
 // ================================
+function drawCat() {
+  // Day
+  if (day === true) {
+    ctx.fillStyle = "black";
+    ctx.fillRect(cat.x - camX, cat.y, cat.w, cat.h);
+
+    ctx.fillStyle = "white";
+    ctx.font = "16px sans-serif";
+    ctx.fillText("Zzz", cat.x - camX, cat.y - 10);
+
+  // Night
+  } else {
+    ctx.fillStyle = "black";
+    ctx.fillRect(cat.x - camX, cat.y, cat.w, cat.h);
+    
+    if (!blinking) {
+      // ögon relativt kattens storlek
+      let eyeY = cat.y + cat.h/2 - 20;
+      let eyeX1 = cat.x - camX + cat.w*0.3;
+      let eyeX2 = cat.x - camX + cat.w*0.7;
+      let eyeR  = cat.h*0.20;  // ögonradie ~15% av kattens höjd
+      let pupilR = eyeR * 0.4;
+
+      ctx.fillStyle = "yellow";
+      ctx.beginPath();
+      ctx.arc(eyeX1, eyeY, eyeR, 0, Math.PI*2);
+      ctx.arc(eyeX2, eyeY, eyeR, 0, Math.PI*2);
+      ctx.fill();
+
+      ctx.fillStyle = "black";
+      ctx.beginPath();
+      ctx.arc(eyeX1, eyeY, pupilR, 0, Math.PI*2);
+      ctx.arc(eyeX2, eyeY, pupilR, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+}
+
+function drawPlayer() {
+  ctx.fillStyle = "lime";
+  ctx.fillRect(player.x - camX, player.y, player.w, player.h);
+}
+
 function drawBackground() {
   ctx.fillStyle = day ? "#88d" : "#000";
   ctx.fillRect(0,0,c.width,c.height);
 }
 
 function drawPlattform() {
-    ctx.fillStyle = day ? "#8B4513" : "#303030ff"; 
-    for (let b of blocks) {
-      ctx.fillRect(b.x - camX, b.y, b.w, b.h);
-    }
+  ctx.fillStyle = day ? "#8B4513" : "#303030ff"; 
+  for (let b of blocks) {
+    ctx.fillRect(b.x - camX, b.y, b.w, b.h);
+  }
+}
+
+function drawUI() {
+  // Timer and day/night text
+  ctx.fillStyle = "white";
+  ctx.font = "14px sans-serif";
+  ctx.fillText(day ? "DAY" : "NIGHT", 10, 20);
+  ctx.fillText("Timer: " + Math.ceil(timer/1000), 10, 40);
+
+  // Progress bar
+  let playerProgress = Math.min(player.x / maxDistance, 1);
+  let catProgress = Math.min(cat.x / maxDistance, 1);
+  // backgrund
+  ctx.fillStyle = "#333";
+  ctx.fillRect(20, 20, c.width - 40, 10);
+  // player (green)
+  ctx.fillStyle = "lime";
+  ctx.fillRect(20, 20, (c.width - 40) * playerProgress, 10);
+  // cat (red, narrower on top)
+  ctx.fillStyle = "red";
+  ctx.fillRect(20, 20, (c.width - 40) * catProgress, 10);
+  // frame
+  ctx.strokeStyle = "white";
+  ctx.strokeRect(20, 20, c.width - 40, 10);
 }
 
 // ================================
@@ -92,13 +160,12 @@ function drawGameOver() {
 // ================================
 function loop() {
 
-  // ================================
-  // === GAME OVER STATE ===
-  // ================================
+  // Game over state
   if (gameState === "gameOver") {
     drawGameOver();
   }
 
+  // Playing state
   if (gameState === "playing") {
     requestAnimationFrame(loop);
     
@@ -130,23 +197,17 @@ function loop() {
       }
     }
 
-    // physics + collisions (cat)
-    if (!day) {
+
+    // Night
+    if (day === false) {
+
+      //////////////////
+      // Cat
+
+      // Cat movement
       cat.x += cat.speed;
-    }
 
-    // camera logic
-    camX = player.x - c.width/2;
-    if (camX < 0) camX = 0;
-
-    // draw background
-    drawBackground();
-
-    // draw ground
-    drawPlattform();
-
-    // BLINK-LOGIK (bara på natten)
-    if (!day) {
+      // Cat blinking
       if (blinking) {
         blinkDuration -= 30;
         if (blinkDuration <= 0) {
@@ -160,61 +221,9 @@ function loop() {
           blinkDuration = 180;
         }
       }
-    } else {
-      // ingen blink på dagen
-      blinking = false;
-      blinkDuration = 0;
-    }
-
-    // rita spelare
-    ctx.fillStyle = "lime";
-    ctx.fillRect(player.x - camX, player.y, player.w, player.h);
-
-    // rita katt
-    if (day) {
-      ctx.fillStyle = "black";
-      ctx.fillRect(cat.x - camX, cat.y, cat.w, cat.h);
-
-      ctx.fillStyle = "white";
-      ctx.font = "16px sans-serif";
-      ctx.fillText("Zzz", cat.x - camX, cat.y - 10);
-    } else {
-      ctx.fillStyle = "black";
-      ctx.fillRect(cat.x - camX, cat.y, cat.w, cat.h);
-      
-      if (!blinking) {
-        // ögon relativt kattens storlek
-        let eyeY = cat.y + cat.h/2 - 20;
-        let eyeX1 = cat.x - camX + cat.w*0.3;
-        let eyeX2 = cat.x - camX + cat.w*0.7;
-        let eyeR  = cat.h*0.20;  // ögonradie ~15% av kattens höjd
-        let pupilR = eyeR * 0.4;
-
-        ctx.fillStyle = "yellow";
-        ctx.beginPath();
-        ctx.arc(eyeX1, eyeY, eyeR, 0, Math.PI*2);
-        ctx.arc(eyeX2, eyeY, eyeR, 0, Math.PI*2);
-        ctx.fill();
-
-        ctx.fillStyle = "black";
-        ctx.beginPath();
-        ctx.arc(eyeX1, eyeY, pupilR, 0, Math.PI*2);
-        ctx.arc(eyeX2, eyeY, pupilR, 0, Math.PI*2);
-        ctx.fill();
-      }
-    }
-
-    // UI
-    ctx.fillStyle = "white";
-    ctx.font = "14px sans-serif";
-    ctx.fillText(day ? "DAY" : "NIGHT", 10, 20);
-    ctx.fillText("Timer: " + Math.ceil(timer/1000), 10, 40);
 
 
-    // ================================
-    // === COLLISION DETECTION ===
-    // ================================
-    if (!day && gameState === "playing") {
+      // Cat + player collision (GameOver)
       if (player.x < cat.x + cat.w &&
           player.x + player.w > cat.x &&
           player.y < cat.y + cat.h &&
@@ -223,38 +232,34 @@ function loop() {
       }
     }
 
+    // Day
+    if (day === true) {
 
+      // Cat
+      blinking = false;
+      blinkDuration = 0;
 
-  // ================================
-  // === DRAW PROGRESS BAR ===
-  // ================================
+  
+    }
+       
+    // camera logic
+    camX = player.x - c.width/2;
+    if (camX < 0) camX = 0;
 
-  const maxDistance = 5000;
+    // draw background
+    drawBackground();
 
-  // spelaren
-  let playerProgress = Math.min(player.x / maxDistance, 1);
+    // draw ground
+    drawPlattform();
 
-  // katten
-  let catProgress = Math.min(cat.x / maxDistance, 1);
+    drawCat();
+    
+    drawPlayer();
 
-  // bakgrund
-  ctx.fillStyle = "#333";
-  ctx.fillRect(20, 20, c.width - 40, 10);
-
-  // spelaren (grön)
-  ctx.fillStyle = "lime";
-  ctx.fillRect(20, 20, (c.width - 40) * playerProgress, 10);
-
-  // katten (röd, smalare ovanpå)
-  ctx.fillStyle = "red";
-  ctx.fillRect(20, 20, (c.width - 40) * catProgress, 10);
-
-  // ram
-  ctx.strokeStyle = "white";
-  ctx.strokeRect(20, 20, c.width - 40, 10);
+    // UI
+    drawUI();
+  }
 }
-}
-
 
 // ================================
 // === START ===
