@@ -31,6 +31,8 @@ let player = {
    onGround:false
 };
 
+let interactCooldown = 0; // ms-ish i din nuvarande 16ms-loop
+
 // ================================
 // === BLACK CAT ===
 // ================================
@@ -67,6 +69,16 @@ let stones = [
 ];
 
 // ================================
+// === TREES (no collision) ===
+// ================================
+let trees = [
+  // trunk-höjd 60 => topp på marken (markens topp = y:350)
+  { x: 600,  y: 350-60, w: 22, h: 60, hp: 5, maxHp: 5 },
+  { x: 950,  y: 350-60, w: 22, h: 60, hp: 5, maxHp: 5 },
+  { x: 1350, y: 350-60, w: 22, h: 60, hp: 5, maxHp: 5 },
+];
+
+// ================================
 // === TRAPS ===
 // ================================
 let traps = [];
@@ -93,6 +105,36 @@ function drawTraps() {
     if (t.active) {
       ctx.fillStyle = "orange";
       ctx.fillRect(t.x - camX, t.y, t.w, t.h);
+    }
+  }
+}
+
+function drawTrees() {
+  for (const t of trees) {
+    // trunk
+    ctx.fillStyle = day ? "#8B4513" : "#555";     // brun på dagen, grå på natten
+    ctx.fillRect(t.x - camX, t.y, t.w, t.h);
+
+    // krona (en enkel grön boll/ellips ovanför stammen)
+    const cx = t.x - camX + t.w/2;
+    const cy = t.y - 10; // lite ovanför stammen
+    ctx.fillStyle = day ? "#2e8b57" : "#444";     // grön / mörkgrå
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, t.w*1.4, 18, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // liten HP-indikator (diskret)
+    if (t.hp < t.maxHp && t.hp > 0) {
+      const bw = t.w;           // bar width
+      const bh = 3;
+      const bx = t.x - camX;
+      const by = t.y - 6;
+      ctx.fillStyle = "#333";
+      ctx.fillRect(bx, by, bw, bh);
+      ctx.fillStyle = "#4caf50";
+      ctx.fillRect(bx, by, bw * (t.hp / t.maxHp), bh);
+      ctx.strokeStyle = "#000";
+      ctx.strokeRect(bx, by, bw, bh);
     }
   }
 }
@@ -234,6 +276,8 @@ function loop() {
       timer = day ? dayLength : nightLength;
     }
 
+    if (interactCooldown > 0) interactCooldown -= 16;
+
     // ---- INPUT (WASD) ----
     const speed = 2;
     let dx = 0;
@@ -300,23 +344,59 @@ for (const s of colliders) {
 }
 
 
-    // --- Interaction (space) ---
-  if(keys[" "]) {
-    for (let s of stones) {
-      if (
-        player.x + player.w > s.x - 10 &&
-        player.x < s.x + s.w + 10 &&
-        player.y + player.h > s.y - 10 &&
-        player.y < s.y + s.h + 10
-      ) {
-        if (!s.hitCooldown) {
+  // ==== INTERACT WITH WORLD (SPACE) ====
+// "Hugga" = slå på objekt i närheten; träden saknar kollision.
+if (keys[" "] && interactCooldown <= 0) {
+  const reach = 12; // hur nära man måste vara
+  const hitOnce = () => { interactCooldown = 200; }; // ~200ms mellan slag
+
+  let didHit = false;
+
+  // 1) STONES (om du har stones-array med hp)
+  if (typeof stones !== "undefined") {
+    for (const s of stones) {
+      // närhets-AABB (lite generös)
+      if (player.x + player.w > s.x - reach &&
+          player.x < s.x + s.w + reach &&
+          player.y + player.h > s.y - reach &&
+          player.y < s.y + s.h + reach) {
+        if (s.hp > 0) {
           s.hp--;
-          s.hitCooldown = 10; // frames delay så man inte spammar för snabbt
+          s.hitCooldown = 10; // valfritt: liten visuell feedback du ev. redan använder
+          didHit = true;
+          break; // slå bara en sak per knapptryck
         }
       }
     }
-    keys[" "] = false; // gör så att man måste släppa och trycka igen
+    // rensa bort sönder-slagna stenar
+    stones = stones.filter(s => s.hp > 0);
   }
+
+  // 2) TREES
+  if (!didHit) {
+    for (const t of trees) {
+      if (player.x + player.w > t.x - reach &&
+          player.x < t.x + t.w + reach &&
+          player.y + player.h > t.y - reach &&
+          player.y < t.y + t.h + reach) {
+        if (t.hp > 0) {
+          t.hp--;
+          didHit = true;
+          break;
+        }
+      }
+    }
+    // ta bort fällda träd (när hp når 0)
+    trees = trees.filter(t => t.hp > 0);
+  }
+
+  if (didHit) {
+    hitOnce();
+  }
+
+  // kräver “tryck/släpp” för nästa slag (kan du ta bort om du vill hålla inne)
+  keys[" "] = false;
+}
 
     // cooldown för stenar
   for (let s of stones) {
@@ -392,6 +472,8 @@ if (cat.stunnedUntil && Date.now() < cat.stunnedUntil) {
 
     // draw ground
     drawPlattform();
+
+    drawTrees(); 
 
     drawCat();
 
