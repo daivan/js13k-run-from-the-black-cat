@@ -62,8 +62,8 @@ let blocks = [
 // === STONES ===
 // ================================
 let stones = [
-  {x:200, y:280, w:30, h:20, hp:5},
-  {x:350, y:280, w:30, h:20, hp:5}
+  {x:800, y:250, w:100, h:100, hp:5},
+  {x:1200, y:280, w:80, h:70, hp:5}
 ];
 
 // ================================
@@ -155,12 +155,14 @@ function drawPlattform() {
   // stones
   ctx.fillStyle = "gray";
   for (let s of stones) {
-    ctx.fillRect(s.x, s.y, s.w, s.h);
+    ctx.fillRect(s.x - camX, s.y, s.w, s.h);
     // hp bar ovanpå stenen
     ctx.fillStyle = "red";
-    ctx.fillRect(s.x, s.y-5, (s.w)*(s.hp/5), 3);
+    ctx.fillRect(s.x - camX, s.y-5, (s.w)*(s.hp/5), 3);
     ctx.fillStyle = "gray";
   }
+
+
 }
 
 function drawUI() {
@@ -203,6 +205,12 @@ function drawGameOver() {
   ctx.fillText("Press F5 to restart", c.width/2 - 100, c.height/2 + 30);
 }
 
+    function rectsOverlap(a, b) {
+  return a.x < b.x + b.w &&
+         a.x + a.w > b.x &&
+         a.y < b.y + b.h &&
+         a.y + a.h > b.y;
+}
 
 
 // ================================
@@ -226,10 +234,18 @@ function loop() {
       timer = day ? dayLength : nightLength;
     }
 
-    // Player movement
-    if (keys["d"]) player.x += 2;
-    if (keys["a"])  player.x -= 2;
-    if (keys["w"] && player.onGround) { player.vy = -8; player.onGround=false; }
+    // ---- INPUT (WASD) ----
+    const speed = 2;
+    let dx = 0;
+    if (keys["a"]) dx -= speed;
+    if (keys["d"]) dx += speed;
+    if (keys["w"] && player.onGround) {
+      player.vy = -8;
+      player.onGround = false;
+    }
+
+    // Samla alla kollisioner som påverkar spelaren
+    const colliders = blocks.concat(stones); // förutsätter att du har stones[]
 
     // physics + collisions (player)
     player.vy += gravity;
@@ -246,6 +262,42 @@ function loop() {
         }
       }
     }
+
+// ---- HORIZONTAL PASS ----
+player.x += dx;
+for (const s of colliders) {
+  if (player.x < s.x + s.w &&
+      player.x + player.w > s.x &&
+      player.y < s.y + s.h &&
+      player.y + player.h > s.y) {
+    // Sidokrock: skjuts ut åt sidan, men VY lämnas orörd (fortsätter falla)
+    if (dx > 0) player.x = s.x - player.w;       // krock från vänster
+    else if (dx < 0) player.x = s.x + s.w;       // krock från höger
+  }
+}
+
+// ---- VERTICAL PASS ----
+player.vy += gravity;
+player.y += player.vy;
+player.onGround = false; // blir true ENDAST vid landning från ovan
+
+for (const s of colliders) {
+  if (player.x < s.x + s.w &&
+      player.x + player.w > s.x &&
+      player.y < s.y + s.h &&
+      player.y + player.h > s.y) {
+    if (player.vy > 0) {
+      // Landar ovanpå
+      player.y = s.y - player.h;
+      player.vy = 0;
+      player.onGround = true;
+    } else if (player.vy < 0) {
+      // Slår i underkant
+      player.y = s.y + s.h;
+      player.vy = 0;
+    }
+  }
+}
 
 
     // --- Interaction (space) ---
