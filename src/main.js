@@ -19,6 +19,20 @@ let camX = 0;
 let gameState = "playing"; // "startMenu", "playing", "upgradeMenu", "gameOver", "win"
 const maxDistance = 5000;
 
+let craftingOpen = false;
+let craftingRecipes = [
+  { name: "Trap", cost: { wood: 3, stone: 1 } },
+  { name: "Wall", cost: { wood: 5, stone: 0 } },
+  { name: "Bridge", cost: { wood: 2, stone: 2 } },
+  { name: "Torch", cost: { wood: 1, stone: 0 } },
+  { name: "Cat Repeller", cost: { wood: 4, stone: 4 } },
+  { name: "Door", cost: { wood: 2, stone: 1 } },
+  { name: "Chest", cost: { wood: 6, stone: 0 } },
+  { name: "Tower", cost: { wood: 3, stone: 3 } },
+  { name: "Spike Pit", cost: { wood: 0, stone: 5 } }
+];
+
+
 // ================================
 // === PLAYER ===
 // ================================
@@ -123,9 +137,90 @@ document.addEventListener("keydown", e => {
   }
 });
 
+document.addEventListener("keydown", e => {
+  if (e.code === "KeyC") {
+    craftingOpen = !craftingOpen;
+  }
+});
+
+// ================================
+// === MOUSE ===
+// ================================
+
+let mouse = {x:0,y:0};
+c.addEventListener("mousemove", e => {
+  const rect = c.getBoundingClientRect();
+  mouse.x = e.clientX - rect.left;
+  mouse.y = e.clientY - rect.top;
+});
+
+
 // ================================
 // === DRAW PLAYING GAMESTATE ===
 // ================================
+function drawCrafting() {
+  if (!craftingOpen) return;
+
+  const slotSize = 50;
+  const spacing = 8;
+  const cols = 3;
+  const rows = 3;
+  const panelWidth = cols * (slotSize + spacing) - spacing + 20;
+  const panelHeight = rows * (slotSize + spacing) - spacing + 20;
+  const startX = (c.width - panelWidth) / 2;
+  const startY = (c.height - panelHeight) / 2;
+
+  // bakgrundspanel
+  ctx.fillStyle = "rgba(0,0,0,0.7)";
+  ctx.fillRect(startX, startY, panelWidth, panelHeight);
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "12px Arial";
+
+  craftingRecipes.forEach((recipe, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const x = startX + 10 + col * (slotSize + spacing);
+    const y = startY + 10 + row * (slotSize + spacing);
+
+    // ruta
+    ctx.fillStyle = "rgba(60,60,60,0.9)";
+    ctx.fillRect(x, y, slotSize, slotSize);
+    ctx.strokeStyle = "#fff";
+    ctx.strokeRect(x, y, slotSize, slotSize);
+
+    // namn
+    ctx.fillStyle = "#fff";
+    ctx.fillText(recipe.name, x + slotSize / 2, y + slotSize / 2);
+  });
+
+  // Tooltip (om musen är över)
+  const mx = mouse.x;
+  const my = mouse.y;
+  craftingRecipes.forEach((recipe, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const x = startX + 10 + col * (slotSize + spacing);
+    const y = startY + 10 + row * (slotSize + spacing);
+
+    if (mx > x && mx < x + slotSize && my > y && my < y + slotSize) {
+      const tooltip = Object.entries(recipe.cost)
+        .filter(([k, v]) => v > 0)
+        .map(([k, v]) => `${v} ${k}`)
+        .join(", ");
+      const tw = ctx.measureText(tooltip).width + 10;
+      const th = 20;
+      ctx.fillStyle = "rgba(0,0,0,0.8)";
+      ctx.fillRect(mx + 10, my + 10, tw, th);
+      ctx.fillStyle = "#fff";
+      ctx.fillText(tooltip, mx + 10 + tw / 2, my + 10 + th / 2);
+    }
+  });
+}
+
+
+
 function drawTraps() {
   for (let t of traps) {
     if (t.active) {
@@ -563,6 +658,8 @@ if (cat.stunnedUntil && Date.now() < cat.stunnedUntil) {
     drawUI();
 
     drawInventory();
+
+    drawCrafting();
   }
 }
 
