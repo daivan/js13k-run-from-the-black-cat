@@ -21,17 +21,17 @@ const maxDistance = 5000;
 
 let craftingOpen = false;
 let craftingRecipes = [
-  { name: "Trap", cost: { wood: 3, stone: 1 } },
-  { name: "Wall", cost: { wood: 5, stone: 0 } },
-  { name: "Bridge", cost: { wood: 2, stone: 2 } },
-  { name: "Torch", cost: { wood: 1, stone: 0 } },
-  { name: "Cat Repeller", cost: { wood: 4, stone: 4 } },
-  { name: "Door", cost: { wood: 2, stone: 1 } },
-  { name: "Chest", cost: { wood: 6, stone: 0 } },
-  { name: "Tower", cost: { wood: 3, stone: 3 } },
-  { name: "Spike Pit", cost: { wood: 0, stone: 5 } }
+  { name: "Trap", cost: { wood: 3, stone: 1 }, time: 3 },
+  { name: "Wall", cost: { wood: 5, stone: 0 }, time: 5 },
+  { name: "Bridge", cost: { wood: 2, stone: 2 }, time: 4 },
+  { name: "Torch", cost: { wood: 1, stone: 0 }, time: 1 },
+  { name: "Cat Repeller", cost: { wood: 4, stone: 4 }, time: 10 },
+  { name: "Door", cost: { wood: 2, stone: 1 }, time: 2 },
+  { name: "Chest", cost: { wood: 6, stone: 0 }, time: 6 },
+  { name: "Tower", cost: { wood: 3, stone: 3 }, time: 8 },
+  { name: "Spike Pit", cost: { wood: 0, stone: 5 }, time: 7 }
 ];
-
+let craftingQueue = null; 
 
 // ================================
 // === PLAYER ===
@@ -154,6 +154,35 @@ c.addEventListener("mousemove", e => {
   mouse.y = e.clientY - rect.top;
 });
 
+c.addEventListener("mousedown", e => {
+  if (!craftingOpen) return;
+
+  const rect = c.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  const slotSize = 50;
+  const spacing = 8;
+  const cols = 3;
+  const startX = (c.width - (cols * (slotSize + spacing) - spacing + 20)) / 2 + 10;
+  const startY = (c.height - (3 * (slotSize + spacing) - spacing + 20)) / 2 + 10;
+
+  craftingRecipes.forEach((recipe, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const x = startX + col * (slotSize + spacing);
+    const y = startY + row * (slotSize + spacing);
+
+    if (mx > x && mx < x + slotSize && my > y && my < y + slotSize) {
+       console.log("Klick på:", recipe.name);
+      if (!craftingQueue) {
+        console.log("vi hamnar i queue:");
+        craftingQueue = { recipe: recipe, timeLeft: recipe.time };
+      }
+    }
+  });
+});
+
 
 // ================================
 // === DRAW PLAYING GAMESTATE ===
@@ -205,10 +234,13 @@ function drawCrafting() {
     const y = startY + 10 + row * (slotSize + spacing);
 
     if (mx > x && mx < x + slotSize && my > y && my < y + slotSize) {
-      const tooltip = Object.entries(recipe.cost)
+      const costText = Object.entries(recipe.cost)
         .filter(([k, v]) => v > 0)
         .map(([k, v]) => `${v} ${k}`)
         .join(", ");
+
+      const tooltip = costText + (costText ? ", " : "") + `${recipe.time}s`;
+
       const tw = ctx.measureText(tooltip).width + 10;
       const th = 20;
       ctx.fillStyle = "rgba(0,0,0,0.8)";
@@ -216,10 +248,46 @@ function drawCrafting() {
       ctx.fillStyle = "#fff";
       ctx.fillText(tooltip, mx + 10 + tw / 2, my + 10 + th / 2);
     }
+
   });
 }
 
+function drawCraftingProgress() {
+  if (craftingQueue) {
+  const barWidth = 200;
+  const barHeight = 20;
+  const x = (c.width - barWidth) / 2;
+  const y = c.height - 60;
 
+  ctx.fillStyle = "rgba(0,0,0,0.5)";
+  ctx.fillRect(x, y, barWidth, barHeight);
+
+  ctx.fillStyle = "lime";
+  const progress = 1 - (craftingQueue.timeLeft / craftingQueue.recipe.time);
+  ctx.fillRect(x, y, barWidth * progress, barHeight);
+}
+
+  if (craftingQueue) {
+    const barWidth = 200;
+    const barHeight = 20;
+    const x = (c.width - barWidth) / 2;
+    const y = c.height - 60;
+
+    const progress = (craftingQueue.recipe.time - craftingQueue.timeLeft) / craftingQueue.recipe.time;
+
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillRect(x, y, barWidth, barHeight);
+    ctx.fillStyle = "lime";
+    ctx.fillRect(x, y, barWidth * progress, barHeight);
+
+    ctx.strokeStyle = "#fff";
+    ctx.strokeRect(x, y, barWidth, barHeight);
+
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "center";
+    ctx.fillText(craftingQueue.recipe.name + " (" + craftingQueue.recipe.time + "s)", x + barWidth/2, y - 5);
+  }
+}
 
 function drawTraps() {
   for (let t of traps) {
@@ -640,6 +708,20 @@ if (cat.stunnedUntil && Date.now() < cat.stunnedUntil) {
     camX = player.x - c.width/2;
     if (camX < 0) camX = 0;
 
+
+    if (craftingQueue) {
+      
+      craftingQueue.timeLeft -= 1/60; // om loopen körs 60fps
+      if (craftingQueue.timeLeft <= 0) {
+        console.log("klar:", craftingQueue.recipe.name);
+        // ge spelaren saken (lägg till i inventory)
+        let name = craftingQueue.recipe.name.toLowerCase();
+        inventory[name] = (inventory[name] || 0) + 1;
+
+        craftingQueue = null; // klart
+      }
+    }
+
     // draw background
     drawBackground();
 
@@ -660,6 +742,8 @@ if (cat.stunnedUntil && Date.now() < cat.stunnedUntil) {
     drawInventory();
 
     drawCrafting();
+
+    drawCraftingProgress();
   }
 }
 
