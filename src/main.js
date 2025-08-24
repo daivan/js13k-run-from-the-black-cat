@@ -14,7 +14,7 @@ let timer = 10000;        // Start timer
 let dayLength = 10000;
 let nightLength = 20000;
 
-let gravity = 0.5;
+let gravity = 0.3;
 let camX = 0;
 let gameState = "playing"; // "startMenu", "playing", "upgradeMenu", "gameOver", "win"
 const maxDistance = 5000;
@@ -32,6 +32,32 @@ let player = {
 };
 
 let interactCooldown = 0; // ms-ish i din nuvarande 16ms-loop
+
+// =========================
+// === INVENTORY SYSTEM ===
+// =========================
+const inventorySize = 8;
+let inventory = Array(inventorySize).fill(null); 
+// varje slot = {type:"wood"/"stone", count:n} eller null
+
+
+function addToInventory(type, count) {
+  // kolla om typen redan finns i en slot
+  for (let i = 0; i < inventory.length; i++) {
+    if (inventory[i] && inventory[i].type === type) {
+      inventory[i].count += count;
+      return;
+    }
+  }
+  // annars lägg i första tomma slot
+  for (let i = 0; i < inventory.length; i++) {
+    if (inventory[i] === null) {
+      inventory[i] = { type, count };
+      return;
+    }
+  }
+  // om fullt → loot försvinner (kan göra drop på marken senare om du vill)
+}
 
 // ================================
 // === BLACK CAT ===
@@ -108,6 +134,48 @@ function drawTraps() {
     }
   }
 }
+
+function drawInventory() {
+  // kolla om allt är tomt
+  if (inventory.every(slot => slot === null)) return; 
+
+  const slotSize = 40;
+  const spacing = 6;
+  const totalWidth = inventorySize * (slotSize + spacing) - spacing;
+  const startX = (c.width - totalWidth) / 2; 
+  const y = c.height - slotSize - 10;
+
+  ctx.font = "14px Arial";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "bottom";
+
+  for (let i = 0; i < inventorySize; i++) {
+    const x = startX + i * (slotSize + spacing);
+
+    // ruta
+    ctx.fillStyle = "rgba(50,50,50,0.7)";
+    ctx.fillRect(x, y, slotSize, slotSize);
+    ctx.strokeStyle = "#fff";
+    ctx.strokeRect(x, y, slotSize, slotSize);
+
+    // innehåll
+    const item = inventory[i];
+    if (item) {
+      if (item.type === "wood") {
+        ctx.fillStyle = "#8B4513"; // brun för trä
+        ctx.fillRect(x + 10, y + 10, 20, 20);
+      } else if (item.type === "stone") {
+        ctx.fillStyle = "#777"; // grå för sten
+        ctx.fillRect(x + 10, y + 10, 20, 20);
+      }
+      // antal
+      ctx.fillStyle = "#fff";
+      ctx.fillText(item.count, x + slotSize - 3, y + slotSize - 3);
+    }
+  }
+}
+
+
 
 function drawTrees() {
   for (const t of trees) {
@@ -364,8 +432,13 @@ if (keys[" "] && interactCooldown <= 0) {
           s.hp--;
           s.hitCooldown = 10; // valfritt: liten visuell feedback du ev. redan använder
           didHit = true;
+          if (s.hp <= 0) {
+            console.log('added to inventory')
+            addToInventory("stone", 3); // t.ex. 3 stenar per sten
+          }
           break; // slå bara en sak per knapptryck
         }
+
       }
     }
     // rensa bort sönder-slagna stenar
@@ -382,8 +455,13 @@ if (keys[" "] && interactCooldown <= 0) {
         if (t.hp > 0) {
           t.hp--;
           didHit = true;
+          if (t.hp <= 0) {
+            console.log('added to inventory')
+            addToInventory("wood", 5); // t.ex. 5 trä per träd
+          }
           break;
         }
+ 
       }
     }
     // ta bort fällda träd (när hp når 0)
@@ -483,6 +561,8 @@ if (cat.stunnedUntil && Date.now() < cat.stunnedUntil) {
 
     // UI
     drawUI();
+
+    drawInventory();
   }
 }
 
