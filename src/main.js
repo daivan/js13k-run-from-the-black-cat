@@ -143,6 +143,15 @@ document.addEventListener("keydown", e => {
   }
 });
 
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") {
+    if (craftingQueue) {
+      craftingQueue = null; // avbryt direkt
+    } else if (craftingOpen) {
+      craftingOpen = false; // stäng bara menyn
+    }
+  }
+});
 // ================================
 // === MOUSE ===
 // ================================
@@ -178,6 +187,7 @@ c.addEventListener("mousedown", e => {
       if (!craftingQueue) {
         console.log("vi hamnar i queue:");
         craftingQueue = { recipe: recipe, timeLeft: recipe.time };
+        craftingOpen = false; // 👈 stäng menyn direkt
       }
     }
   });
@@ -415,7 +425,7 @@ function drawPlayer() {
 
   if (craftingQueue) {
     ctx.fillStyle = "yellow";
-    ctx.fillRect(player.x, player.y - 10, player.w, 5); // liten gul stapel ovanför
+    ctx.fillRect(player.x - camX, player.y - 10, player.w, 5); // liten gul stapel ovanför
   }
 }
 
