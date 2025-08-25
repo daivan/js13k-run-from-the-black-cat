@@ -412,6 +412,11 @@ function drawCat() {
 function drawPlayer() {
   ctx.fillStyle = "lime";
   ctx.fillRect(player.x - camX, player.y, player.w, player.h);
+
+  if (craftingQueue) {
+    ctx.fillStyle = "yellow";
+    ctx.fillRect(player.x, player.y - 10, player.w, 5); // liten gul stapel ovanför
+  }
 }
 
 function drawBackground() {
@@ -500,6 +505,7 @@ function loop() {
   if (gameState === "playing") {
     requestAnimationFrame(loop);
     
+
       // timer
     timer -= 16;
     if (timer <= 0) {
@@ -512,13 +518,18 @@ function loop() {
     // ---- INPUT (WASD) ----
     const speed = 2;
     let dx = 0;
-    if (keys["a"]) dx -= speed;
-    if (keys["d"]) dx += speed;
-    if (keys["w"] && player.onGround) {
-      player.vy = -8;
-      player.onGround = false;
+    if (!craftingQueue) {
+      if (keys["a"]) dx -= speed;
+      if (keys["d"]) dx += speed;
+      if (keys["w"] && player.onGround) {
+        player.vy = -8;
+        player.onGround = false;
+      }
+  
     }
+      
 
+    
     // Samla alla kollisioner som påverkar spelaren
     const colliders = blocks.concat(stones); // förutsätter att du har stones[]
 
