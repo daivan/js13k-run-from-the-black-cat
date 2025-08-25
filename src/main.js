@@ -51,26 +51,44 @@ let interactCooldown = 0; // ms-ish i din nuvarande 16ms-loop
 // === INVENTORY SYSTEM ===
 // =========================
 const inventorySize = 8;
-let inventory = Array(inventorySize).fill(null); 
+let craftingMessage = null;
+let inventory = {
+  wood: 0,
+  stone: 0
+};
+
 // varje slot = {type:"wood"/"stone", count:n} eller null
 
 
 function addToInventory(type, count) {
-  // kolla om typen redan finns i en slot
-  for (let i = 0; i < inventory.length; i++) {
-    if (inventory[i] && inventory[i].type === type) {
-      inventory[i].count += count;
-      return;
-    }
+  if (!(type in inventory)) {
+    // om det är en ny resurs vi inte sett innan
+    inventory[type] = 0;
   }
-  // annars lägg i första tomma slot
-  for (let i = 0; i < inventory.length; i++) {
-    if (inventory[i] === null) {
-      inventory[i] = { type, count };
-      return;
-    }
-  }
-  // om fullt → loot försvinner (kan göra drop på marken senare om du vill)
+  inventory[type] += count;
+}
+
+function hasResources(recipe) {
+  const cost = recipe.cost || {};
+
+  if (cost.wood && inventory.wood < cost.wood) return false;
+  if (cost.stone && inventory.stone < cost.stone) return false;
+
+  return true;
+}
+
+function spendResources(recipe) {
+  const cost = recipe.cost || {};
+
+  if (cost.wood) inventory.wood -= cost.wood;
+  if (cost.stone) inventory.stone -= cost.stone;
+}
+
+function refundResources(recipe) {
+  const cost = recipe.cost || {};
+
+  if (cost.wood) inventory.wood = (inventory.wood || 0) + cost.wood;
+  if (cost.stone) inventory.stone = (inventory.stone || 0) + cost.stone;
 }
 
 // ================================
@@ -146,9 +164,10 @@ document.addEventListener("keydown", e => {
 document.addEventListener("keydown", e => {
   if (e.key === "Escape") {
     if (craftingQueue) {
-      craftingQueue = null; // avbryt direkt
+      refundResources(craftingQueue.recipe); // få tillbaka allt
+      craftingQueue = null;
     } else if (craftingOpen) {
-      craftingOpen = false; // stäng bara menyn
+      craftingOpen = false;
     }
   }
 });
@@ -183,11 +202,17 @@ c.addEventListener("mousedown", e => {
     const y = startY + row * (slotSize + spacing);
 
     if (mx > x && mx < x + slotSize && my > y && my < y + slotSize) {
-       console.log("Klick på:", recipe.name);
       if (!craftingQueue) {
-        console.log("vi hamnar i queue:");
-        craftingQueue = { recipe: recipe, timeLeft: recipe.time };
-        craftingOpen = false; // 👈 stäng menyn direkt
+        if (hasResources(recipe)) {
+          console.log("has resources:", hasResources(recipe))
+          console.log("Klick p!!å:", recipe.name);
+          spendResources(recipe); // ta resurser direkt
+          craftingQueue = { recipe: recipe, timeLeft: recipe.time };
+          craftingOpen = false;
+        } else {
+          craftingMessage = "Not enough resources!";
+          setTimeout(() => craftingMessage = null, 2000); // 2s meddelande
+        }
       }
     }
   });
@@ -309,20 +334,21 @@ function drawTraps() {
 }
 
 function drawInventory() {
-  // kolla om allt är tomt
-  if (inventory.every(slot => slot === null)) return; 
+  // kolla om allt är 0
+  if (Object.values(inventory).every(amount => amount === 0)) return;
 
   const slotSize = 40;
   const spacing = 6;
-  const totalWidth = inventorySize * (slotSize + spacing) - spacing;
-  const startX = (c.width - totalWidth) / 2; 
+  const keys = Object.keys(inventory);
+  const totalWidth = keys.length * (slotSize + spacing) - spacing;
+  const startX = (c.width - totalWidth) / 2;
   const y = c.height - slotSize - 10;
 
   ctx.font = "14px Arial";
   ctx.textAlign = "right";
   ctx.textBaseline = "bottom";
 
-  for (let i = 0; i < inventorySize; i++) {
+  keys.forEach((key, i) => {
     const x = startX + i * (slotSize + spacing);
 
     // ruta
@@ -331,23 +357,20 @@ function drawInventory() {
     ctx.strokeStyle = "#fff";
     ctx.strokeRect(x, y, slotSize, slotSize);
 
-    // innehåll
-    const item = inventory[i];
-    if (item) {
-      if (item.type === "wood") {
-        ctx.fillStyle = "#8B4513"; // brun för trä
-        ctx.fillRect(x + 10, y + 10, 20, 20);
-      } else if (item.type === "stone") {
-        ctx.fillStyle = "#777"; // grå för sten
-        ctx.fillRect(x + 10, y + 10, 20, 20);
-      }
-      // antal
-      ctx.fillStyle = "#fff";
-      ctx.fillText(item.count, x + slotSize - 3, y + slotSize - 3);
+    // ikon
+    if (key === "wood") {
+      ctx.fillStyle = "#8B4513"; // brun
+      ctx.fillRect(x + 10, y + 10, 20, 20);
+    } else if (key === "stone") {
+      ctx.fillStyle = "#777"; // grå
+      ctx.fillRect(x + 10, y + 10, 20, 20);
     }
-  }
-}
 
+    // antal
+    ctx.fillStyle = "#fff";
+    ctx.fillText(inventory[key], x + slotSize - 3, y + slotSize - 3);
+  });
+}
 
 
 function drawTrees() {
@@ -765,6 +788,12 @@ if (cat.stunnedUntil && Date.now() < cat.stunnedUntil) {
     drawCrafting();
 
     drawCraftingProgress();
+
+    if (craftingMessage) {
+      ctx.fillStyle = "red";
+      ctx.font = "20px Arial";
+      ctx.fillText(craftingMessage, c.width/2 - 80, c.height/2 - 100);
+    }
   }
 }
 
