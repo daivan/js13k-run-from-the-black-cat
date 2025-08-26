@@ -84,8 +84,8 @@ function playDayMusic() {
   }
 
   window.dayMusicInterval = setInterval(() => {
-    zzfx(...[1,,440,,0.2,0.2,1,,0,,0,,0,0.5]);
-    zzfx(...[1,,660,,0.2,0.2,1,,0,,0,,0,0.5]);
+    zzfx(...[0.3,0,440,0.05,0.15,0.1,0,0,0,0,0,0,0,0.5]);
+    zzfx(...[0.3,0,660,0.05,0.15,0.1,0,0,0,0,0,0,0,0.5]);
   }, 800);
 }
 
@@ -291,25 +291,82 @@ c.addEventListener("mousedown", e => {
   });
 });
 
+// For startMenu
+c.addEventListener("mousemove", (e) => {
+  const r = c.getBoundingClientRect();
+  mouse.x = e.clientX - r.left;
+  mouse.y = e.clientY - r.top;
+});
+
 // ================================
 // === DRAW PLAYING START MENU ===
 // ================================
+
+// === START MENU EYES ===
+//let mouse = { x: c.width/2, y: c.height/2 }; // följer musen på menyn
+const eyeR = 60;           // ögats radie
+const pupilR = 18;         // pupillens radie
+const eyeOffsetX = 130;    // hur långt från mitten vänster/höger öga placeras
+const eyeY = c.height/2;   // höjd för ögonen
+function drawEye(cx, cy) {
+  // sclera (gul, med glow)
+  ctx.save();
+  ctx.shadowColor = "rgba(255, 230, 80, 0.9)";
+  ctx.shadowBlur = 25;
+  ctx.fillStyle = "rgb(255, 220, 60)";
+  ctx.beginPath();
+  ctx.arc(cx, cy, eyeR, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+
+  // beräkna pupillens position mot musen (clampad i ögat)
+  const dx = mouse.x - cx;
+  const dy = mouse.y - cy;
+  const dist = Math.hypot(dx, dy) || 1;
+  const maxOffset = eyeR - pupilR - 6;
+  const px = cx + (dx / dist) * Math.min(dist, maxOffset);
+  const py = cy + (dy / dist) * Math.min(dist, maxOffset);
+
+  // pupill (svart)
+  ctx.fillStyle = "#000";
+  ctx.beginPath();
+  ctx.arc(px, py, pupilR, 0, Math.PI*2);
+  ctx.fill();
+
+  // liten highlight på pupillen
+  ctx.fillStyle = "rgba(255,255,255,0.7)";
+  ctx.beginPath();
+  ctx.arc(px - pupilR*0.4, py - pupilR*0.4, 3, 0, Math.PI*2);
+  ctx.fill();
+}
+
 function drawStartMenu() {
+  // svart bakgrund
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, c.width, c.height);
 
-  ctx.fillStyle = "#fff";
-  ctx.font = "30px Arial";
+  // ögon
+  const cx = c.width/2;
+  drawEye(cx - eyeOffsetX, eyeY);
+  drawEye(cx + eyeOffsetX, eyeY);
+
+  // titel
   ctx.textAlign = "center";
-  ctx.fillText("Mitt JS13k-spel", c.width/2, c.height/2 - 40);
+  ctx.textBaseline = "middle";
 
-  ctx.font = "16px Arial";
-  ctx.fillText("Använd WASD för att röra dig", c.width/2, c.height/2);
-  ctx.fillText("Tryck på C för att öppna crafting", c.width/2, c.height/2 + 20);
+  ctx.fillStyle = "red";
+  ctx.font = "36px monospace";
+  ctx.shadowColor = "rgba(255,0,0,0.35)";
+  ctx.shadowBlur = 10;
+  ctx.fillText("Run from the black cat", c.width/2, eyeY - eyeR - 50);
 
-  ctx.fillStyle = "#0f0";
-  ctx.fillText("Click to Start", c.width/2, c.height/2 + 80);
+  // instruktion
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "#fff";
+  ctx.font = "18px monospace";
+  ctx.fillText("Press Enter to Start", c.width/2, eyeY + eyeR + 50);
 }
+
 
 // ================================
 // === DRAW PLAYING GAMESTATE ===
@@ -502,14 +559,14 @@ function drawCat() {
     ctx.fillRect(cat.x - camX, cat.y, cat.w, cat.h);
 
     ctx.fillStyle = "white";
-    ctx.font = "16px sans-serif";
-    ctx.fillText("Zzz", cat.x - camX, cat.y - 10);
+    ctx.font = "16px monospace";
+    ctx.fillText("Zzz", cat.x - camX + 20, cat.y - 10);
 
   // Night
   } else {
     ctx.fillStyle = "black";
-    ctx.fillRect(cat.x - camX, cat.y, cat.w, cat.h);
-    
+    ctx.fillRect(cat.x - camX, cat.y, cat.w, cat.h - 10);
+
     if (!blinking) {
       // ögon relativt kattens storlek
       let eyeY = cat.y + cat.h/2 - 20;
@@ -571,7 +628,7 @@ function drawPlattform() {
 function drawUI() {
   // Timer and day/night text
   ctx.fillStyle = "white";
-  ctx.font = "14px sans-serif";
+  ctx.font = "14px monospace";
   ctx.fillText(day ? "DAY" : "NIGHT", 10, 20);
   ctx.fillText("Timer: " + Math.ceil(timer/1000), 10, 40);
 
@@ -600,11 +657,11 @@ function drawGameOver() {
   ctx.fillRect(0,0,c.width,c.height);
 
   ctx.fillStyle = "red";
-  ctx.font = "30px sans-serif";
+  ctx.font = "30px monospace";
   ctx.fillText("GAME OVER", c.width/2 - 80, c.height/2);
 
   ctx.fillStyle = "white";
-  ctx.font = "16px sans-serif";
+  ctx.font = "16px monospace";
   ctx.fillText("Press F5 to restart", c.width/2 - 100, c.height/2 + 30);
 }
 
