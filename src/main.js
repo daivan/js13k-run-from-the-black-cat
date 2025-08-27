@@ -244,6 +244,22 @@ document.addEventListener("keydown", e => {
     gameState = "playing";
   }
 });
+
+document.addEventListener("keydown", e => {
+  if (gameState === "startMenu") {
+    if (e.key === "Enter") {
+      if (zzfxX.state === "suspended") zzfxX.resume();
+      playDayMusic();
+      gameState = "playing";
+    }
+  }
+
+  if (gameState === "howToPlay") {
+    if (e.key === "Enter") {
+      gameState = "startMenu";
+    }
+  }
+});
 // ================================
 // === MOUSE ===
 // ================================
@@ -365,8 +381,56 @@ function drawStartMenu() {
   ctx.fillStyle = "#fff";
   ctx.font = "18px monospace";
   ctx.fillText("Press Enter to Start", c.width/2, eyeY + eyeR + 50);
+
+  ctx.fillStyle = "yellow";
+ctx.font = "20px monospace";
+ctx.fillText("How to Play", c.width/2, c.height - 100);
+
+// kolla klick
+c.addEventListener("click", e => {
+  if (gameState === "startMenu") {
+    const mx = e.offsetX;
+    const my = e.offsetY;
+    // väldigt enkelt hitbox för texten
+    if (mx > c.width/2 - 80 && mx < c.width/2 + 80 &&
+        my > c.height - 120 && my < c.height - 80) {
+      gameState = "howToPlay";
+    }
+  }
+});
 }
 
+// ================================
+// === DRAW HOWTOPLAY GAMESTATE ===
+// ================================
+function drawHowToPlay() {
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, c.width, c.height);
+
+  ctx.fillStyle = "red";
+  ctx.font = "40px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("How to Play", c.width / 2, 100);
+
+  ctx.fillStyle = "white";
+  ctx.font = "20px monospace";
+  ctx.textAlign = "left";
+
+  const lines = [
+    "Move: WASD",
+    "Interact: SPACE",
+    "Craft: C",
+    "Survive as long as you can!"
+  ];
+
+  lines.forEach((line, i) => {
+    ctx.fillText(line, c.width / 2 - 100, 160 + i * 40);
+  });
+
+  ctx.textAlign = "center";
+  ctx.fillStyle = "yellow";
+  ctx.fillText("Press ENTER to go back", c.width / 2, c.height - 80);
+}
 
 // ================================
 // === DRAW PLAYING GAMESTATE ===
@@ -682,6 +746,10 @@ function loop() {
     // start menu state
   if (gameState === "startMenu") {
     drawStartMenu();
+  }
+
+  if (gameState === "howToPlay") {
+    drawHowToPlay();
   }
 
   // Game over state
