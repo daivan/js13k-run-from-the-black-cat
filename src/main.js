@@ -382,19 +382,26 @@ function drawStartMenu() {
   ctx.font = "18px monospace";
   ctx.fillText("Press Enter to Start", c.width/2, eyeY + eyeR + 50);
 
-  ctx.fillStyle = "yellow";
-ctx.font = "20px monospace";
-ctx.fillText("How to Play", c.width/2, c.height - 100);
+  
+  const text = "How to Play";
+  const textWidth = ctx.measureText(text).width;
+  const textX = 20;
+  const textY = c.height - 20;
+
+  // rita
+  ctx.textAlign = "left";
+  ctx.textBaseline = "bottom";
+  ctx.fillText(text, textX, textY);
 
 // kolla klick
 c.addEventListener("click", e => {
   if (gameState === "startMenu") {
     const mx = e.offsetX;
     const my = e.offsetY;
-    // väldigt enkelt hitbox för texten
-    if (mx > c.width/2 - 80 && mx < c.width/2 + 80 &&
-        my > c.height - 120 && my < c.height - 80) {
-      gameState = "howToPlay";
+    if (mx >= textX && mx <= textX + textWidth &&
+        my >= textY - 20 && my <= textY) {
+      // klickat på "How to Play"
+      gameState = "howToPlay"; 
     }
   }
 });
