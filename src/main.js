@@ -232,28 +232,8 @@ document.addEventListener("keydown", e => {
   }
 });
 
-document.addEventListener("keydown", e => {
-  if (gameState === "startMenu") {
-    if (zzfxX.state === "suspended") {
-      zzfxX.resume();
-    }
-    if (!musicStarted) {
-      playDayMusic();
-      musicStarted = true;
-    }
-    gameState = "playing";
-  }
-});
 
 document.addEventListener("keydown", e => {
-  if (gameState === "startMenu") {
-    if (e.key === "Enter") {
-      if (zzfxX.state === "suspended") zzfxX.resume();
-      playDayMusic();
-      gameState = "playing";
-    }
-  }
-
   if (gameState === "howToPlay") {
     if (e.key === "Enter") {
       gameState = "startMenu";
@@ -376,21 +356,41 @@ function drawStartMenu() {
   ctx.shadowBlur = 10;
   ctx.fillText("Run from the black cat", c.width/2, eyeY - eyeR - 50);
 
-  // instruktion
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = "#fff";
-  ctx.font = "18px monospace";
-  ctx.fillText("Press Enter to Start", c.width/2, eyeY + eyeR + 50);
+  // rita
+ctx.font = "18px monospace"; // sätt fonten först!
+ctx.textAlign = "left";
+ctx.textBaseline = "bottom";
+ctx.shadowBlur = 0;
 
+const ClickToStartText = "Click to Start";
+const ClickToStartTextWidth = ctx.measureText(ClickToStartText).width;
+
+const ClickToStartTextX = 800 - 180;
+const ClickToStartTextY = c.height - 20;
+
+// check hover
+const ClickToStartTextHovering =
+  mouse.x >= ClickToStartTextX &&
+  mouse.x <= ClickToStartTextX + ClickToStartTextWidth &&
+  mouse.y >= ClickToStartTextY - 24 &&
+  mouse.y <= ClickToStartTextY;
+
+ctx.fillStyle = ClickToStartTextHovering ? "yellow" : "white";
+ctx.fillText(ClickToStartText, ClickToStartTextX, ClickToStartTextY);
   
   const text = "How to Play";
   const textWidth = ctx.measureText(text).width;
   const textX = 20;
   const textY = c.height - 20;
 
+  // check hover
+  const hovering = mouse.x >= textX && mouse.x <= textX + textWidth &&
+                   mouse.y >= textY - 24 && mouse.y <= textY;
+
   // rita
   ctx.textAlign = "left";
   ctx.textBaseline = "bottom";
+  ctx.fillStyle = hovering ? "yellow" : "white"; // 🔥 highlight
   ctx.fillText(text, textX, textY);
 
 // kolla klick
@@ -402,6 +402,15 @@ c.addEventListener("click", e => {
         my >= textY - 20 && my <= textY) {
       // klickat på "How to Play"
       gameState = "howToPlay"; 
+    }
+
+        // Klick på "Click to Start"
+    if (ClickToStartTextHovering) {
+      if (zzfxX.state === "suspended") {
+        zzfxX.resume(); // musik
+      }
+      playDayMusic();
+      gameState = "playing";
     }
   }
 });
