@@ -29,8 +29,8 @@ b.buffer=p;b.connect(zzfxX.destination);b.start()}
 // === GAME STATE ===
 // ================================
 let day = true;
-let timer = 10000;        // Start timer
-let dayLength = 10000;
+let timer = 20000;        // Start timer
+let dayLength = 20000;
 let nightLength = 20000;
 
 let gravity = 0.3;
@@ -182,8 +182,8 @@ let blocks = [
 // === STONES ===
 // ================================
 let stones = [
-  {x:800, y:250, w:100, h:100, hp:5},
-  {x:1200, y:280, w:80, h:70, hp:5}
+  //{x:800, y:250, w:100, h:100, hp:5},
+  //{x:1200, y:280, w:80, h:70, hp:5}
 ];
 
 // ================================
@@ -451,6 +451,14 @@ function drawHowToPlay() {
 // ================================
 // === DRAW PLAYING GAMESTATE ===
 // ================================
+function drawDebug() {
+  ctx.font = "12px monospace";
+  ctx.fillStyle = "lime";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.fillText(`x: ${Math.floor(player.x)} y: ${Math.floor(player.y)}`, 10, 10);
+}
+
 function drawCrafting() {
   if (!craftingOpen) return;
 
@@ -1029,6 +1037,9 @@ if (cat.stunnedUntil && Date.now() < cat.stunnedUntil) {
     drawCrafting();
 
     drawCraftingProgress();
+
+    // 🔥 debug overlay
+    drawDebug();
 
     if (craftingMessage) {
       ctx.fillStyle = "red";
