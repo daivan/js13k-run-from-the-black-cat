@@ -29,13 +29,13 @@ b.buffer=p;b.connect(zzfxX.destination);b.start()}
 // === GAME STATE ===
 // ================================
 let day = true;
-let timer = 20000;        // Start timer
-let dayLength = 20000;
-let nightLength = 20000;
+let timer = 60000;        // Start timer
+let dayLength = 60000;
+let nightLength = 30000;
 
 let gravity = 0.3;
 let camX = 0;
-let gameState = "startMenu"; // "startMenu", "playing", "gameOver", "win"
+let gameState = "playing"; // "startMenu", "playing", "gameOver", "win"
 const maxDistance = 5000;
 
 let craftingOpen = false;
@@ -63,7 +63,7 @@ let player = {
    vy:0,
    onGround:false
 };
-
+const speed = 3;
 let interactCooldown = 0; // ms-ish i din nuvarande 16ms-loop
 
 // =========================
@@ -169,13 +169,24 @@ let lastTime = 0;                               // for dt calculation
 // ================================
 // (x,y,w,h)
 let blocks = [
-  {x:0, y:350, w:20000, h:50},   // ground
+  {x:0, y:350, w:50000, h:50},   // ground
+
+  // night 1
+  {x:500, y:280, w:100, h:20},  // small platform
+  {x:650, y:240, w:100, h:20},  // small platform
+  {x:800, y:200, w:100, h:20},  // small platform
+  {x:950, y:160, w:100, h:20},  // small platform
+  {x:1100, y:140, w:100, h:1000},  // small platform
+  /*
+  
+
   {x:300, y:300, w:100, h:20},  // small platform
   {x:500, y:250, w:100, h:20},  // higher platform
   {x:800, y:300, w:150, h:20},  // another platform
   {x:1200, y:300, w:100, h:20},  // another platform
   {x:2200, y:250, w:50, h:20},  // another platform
   {x:2200, y:250, w:150, h:20},  // another platform
+  */
 ];
 
 // ================================
@@ -183,7 +194,7 @@ let blocks = [
 // ================================
 let stones = [
   //{x:800, y:250, w:100, h:100, hp:5},
-  //{x:1200, y:280, w:80, h:70, hp:5}
+  {x:2000, y:200, w:100, h:150, hp:20}
 ];
 
 // ================================
@@ -191,9 +202,11 @@ let stones = [
 // ================================
 let trees = [
   // trunk-höjd 60 => topp på marken (markens topp = y:350)
+  /*
   { x: 600,  y: 350-60, w: 22, h: 60, hp: 5, maxHp: 5 },
   { x: 950,  y: 350-60, w: 22, h: 60, hp: 5, maxHp: 5 },
   { x: 1350, y: 350-60, w: 22, h: 60, hp: 5, maxHp: 5 },
+   */
 ];
 
 // ================================
@@ -613,7 +626,7 @@ function drawInventory() {
 function drawTrees() {
   for (const t of trees) {
     // trunk
-    ctx.fillStyle = day ? "#8B4513" : "#555";     // brun på dagen, grå på natten
+    ctx.fillStyle = day ? "#5e2b08ff" : "#555";     // brun på dagen, grå på natten
     ctx.fillRect(t.x - camX, t.y, t.w, t.h);
 
     // krona (en enkel grön boll/ellips ovanför stammen)
@@ -702,14 +715,34 @@ function drawPlattform() {
 
   // stones
   ctx.fillStyle = "gray";
-  for (let s of stones) {
-    ctx.fillRect(s.x - camX, s.y, s.w, s.h);
-    // hp bar ovanpå stenen
-    ctx.fillStyle = "red";
-    ctx.fillRect(s.x - camX, s.y-5, (s.w)*(s.hp/5), 3);
-    ctx.fillStyle = "gray";
-  }
+for (let s of stones) {
+  // Om maxHp inte finns, sätt det till s.hp (första gången vi ritar stenen)
+  if (!s.maxHp) s.maxHp = s.hp;
 
+  // Rita själva stenen
+  ctx.fillRect(s.x - camX, s.y, s.w, s.h);
+
+  // === HP BAR ===
+  const maxBarWidth = 40; // Alltid samma längd
+  const hpPercent = Math.max(0, s.hp / s.maxHp); // Procent
+
+  const barX = s.x - camX + (s.w / 2) - (maxBarWidth / 2);
+  const barY = s.y - 8;
+
+  // Bakgrund
+  ctx.fillStyle = "darkred";
+  ctx.fillRect(barX, barY, maxBarWidth, 4);
+
+  // Fyllnad
+  ctx.fillStyle = "red";
+  ctx.fillRect(barX, barY, maxBarWidth * hpPercent, 4);
+
+  // Outline
+  ctx.strokeStyle = "black";
+  ctx.strokeRect(barX, barY, maxBarWidth, 4);
+
+  ctx.fillStyle = "gray";
+}
 
 }
 
@@ -719,22 +752,6 @@ function drawUI() {
   ctx.font = "14px monospace";
   ctx.fillText(day ? "DAY" : "NIGHT", 10, 20);
   ctx.fillText("Timer: " + Math.ceil(timer/1000), 10, 40);
-
-  // Progress bar
-  let playerProgress = Math.min(player.x / maxDistance, 1);
-  let catProgress = Math.min(cat.x / maxDistance, 1);
-  // backgrund
-  ctx.fillStyle = "#333";
-  ctx.fillRect(20, 20, c.width - 40, 10);
-  // player (green)
-  ctx.fillStyle = "lime";
-  ctx.fillRect(20, 20, (c.width - 40) * playerProgress, 10);
-  // cat (red, narrower on top)
-  ctx.fillStyle = "red";
-  ctx.fillRect(20, 20, (c.width - 40) * catProgress, 10);
-  // frame
-  ctx.strokeStyle = "white";
-  ctx.strokeRect(20, 20, c.width - 40, 10);
 }
 
 // ================================
@@ -798,7 +815,7 @@ function loop() {
     if (interactCooldown > 0) interactCooldown -= 16;
 
     // ---- INPUT (WASD) ----
-    const speed = 2;
+  
     let dx = 0;
     if (!craftingQueue) {
       if (keys["a"]) dx -= speed;
