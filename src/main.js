@@ -177,6 +177,18 @@ let blocks = [
   {x:800, y:200, w:100, h:20},  // small platform
   {x:950, y:160, w:100, h:20},  // small platform
   {x:1100, y:140, w:100, h:1000},  // small platform
+
+  {x:1300, y:0, w:20, h:300},  // Vertical bar
+
+  {x:1300, y:290, w:750, h:20},  // small platform
+  {x:1400, y:230, w:750, h:20},  // small platform
+  {x:1300, y:170, w:750, h:20},  // small platform
+  {x:1400, y:40, w:750, h:20},  // small platform
+
+  {x:1300, y:0, w:750, h:20},  // small platform
+
+
+  {x:2100, y:140, w:100, h:1000},  // small platform
   /*
   
 
@@ -194,7 +206,7 @@ let blocks = [
 // ================================
 let stones = [
   //{x:800, y:250, w:100, h:100, hp:5},
-  {x:2000, y:200, w:100, h:150, hp:20}
+  //{x:2000, y:200, w:100, h:150, hp:20}
 ];
 
 // ================================
