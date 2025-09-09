@@ -203,19 +203,30 @@ let blocks = [
 // === STONES ===
 // ================================
 let stones = [
-  {x:3000, y:200, w:100, h:150, hp:20}
+  {x:3500, y:200, w:100, h:150, hp:20}
 ];
 
 // ================================
 // === TREES (no collision) ===
 // ================================
 let trees = [
-  // trunk-höjd 60 => topp på marken (markens topp = y:350)
-  /*
-  { x: 600,  y: 350-60, w: 22, h: 60, hp: 5, maxHp: 5 },
-  { x: 950,  y: 350-60, w: 22, h: 60, hp: 5, maxHp: 5 },
-  { x: 1350, y: 350-60, w: 22, h: 60, hp: 5, maxHp: 5 },
-   */
+  // 2300 till 3500
+  { x: 2520,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 2575,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 2630,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 2600,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 2700,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 2750,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 2790,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 3000,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 3100,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 3140,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 3180,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 3200,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 3220,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 3260,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 3300,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 3310,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
 ];
 
 // ================================
@@ -947,7 +958,7 @@ if (keys[" "] && interactCooldown <= 0) {
           didHit = true;
           if (t.hp <= 0) {
             console.log('added to inventory')
-            addToInventory("wood", 5); // t.ex. 5 trä per träd
+            addToInventory("wood", 1); // t.ex. 1 trä per träd
           }
           break;
         }
