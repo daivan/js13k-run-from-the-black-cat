@@ -29,8 +29,8 @@ b.buffer=p;b.connect(zzfxX.destination);b.start()}
 // === GAME STATE ===
 // ================================
 let day = true;
-let timer = 60000;        // Start timer
-let dayLength = 60000;
+let timer = 10000;        // Start timer
+let dayLength = 30000;
 let nightLength = 30000;
 
 let gravity = 0.3;
@@ -155,7 +155,7 @@ function refundResources(recipe) {
 // === BLACK CAT ===
 // ================================
 let catHeight = c.height / 4;
-let cat = {x:0, y:250, w:catHeight, h:catHeight, speed:1, vy:0};
+let cat = {x:0, y:250, w:catHeight, h:catHeight, speed:2, vy:0};
 
 // Cat eyes blinking
 let blinking = false;
@@ -180,15 +180,13 @@ let blocks = [
 
   {x:1300, y:0, w:20, h:300},  // Vertical bar
 
-  {x:1300, y:290, w:750, h:20},  // small platform
-  {x:1400, y:230, w:750, h:20},  // small platform
-  {x:1300, y:170, w:750, h:20},  // small platform
-  {x:1400, y:40, w:750, h:20},  // small platform
-
+  {x:1300, y:280, w:750, h:20},  // small platform
+  {x:1400, y:210, w:750, h:20},  // small platform
+  {x:1300, y:140, w:750, h:20},  // small platform
+  {x:1400, y:70, w:750, h:20},  // small platform
   {x:1300, y:0, w:750, h:20},  // small platform
 
-
-  {x:2100, y:140, w:100, h:1000},  // small platform
+  {x:2100, y:70, w:100, h:1000},  // Vertical bar
   /*
   
 
@@ -205,8 +203,7 @@ let blocks = [
 // === STONES ===
 // ================================
 let stones = [
-  //{x:800, y:250, w:100, h:100, hp:5},
-  //{x:2000, y:200, w:100, h:150, hp:20}
+  {x:3000, y:200, w:100, h:150, hp:20}
 ];
 
 // ================================
@@ -833,7 +830,7 @@ function loop() {
       if (keys["a"]) dx -= speed;
       if (keys["d"]) dx += speed;
       if (keys["w"] && player.onGround) {
-        player.vy = -8;
+        player.vy = -7;
         player.onGround = false;
       }
   
@@ -848,17 +845,25 @@ function loop() {
     player.vy += gravity;
     player.y += player.vy;
     player.onGround = false;
-    for (let b of blocks) {
-      if (player.x < b.x+b.w && player.x+player.w > b.x &&
-          player.y < b.y+b.h && player.y+player.h > b.y) {
-        // kollision ovanpå block
-        if (player.vy > 0) {
-          player.y = b.y - player.h;
-          player.vy = 0;
-          player.onGround = true;
-        }
-      }
+
+// Vertikal kollision
+for (let b of blocks) {
+  if (player.x < b.x + b.w && player.x + player.w > b.x &&
+      player.y < b.y + b.h && player.y + player.h > b.y) {
+
+    // Om spelaren rör sig neråt (landar ovanpå block)
+    if (player.vy > 0 && player.y + player.h > b.y && player.y < b.y) {
+      player.y = b.y - player.h; // Placera ovanpå block
+      player.vy = 0;
+      player.onGround = true;
     }
+    // Om spelaren rör sig uppåt (träffar block underifrån)
+    else if (player.vy < 0 && player.y < b.y + b.h && player.y + player.h > b.y + b.h) {
+      player.y = b.y + b.h; // Placera under block
+      player.vy = 0; // Stoppa hoppet
+    }
+  }
+}
 
 // ---- HORIZONTAL PASS ----
 player.x += dx;
@@ -987,13 +992,57 @@ for (let t of traps) {
     cat.stunnedUntil = Date.now() + 3000; // katten stannar i 3 sek
   }
 }
+// Se till att katten har vx
+if (cat.vx === undefined) cat.vx = 0;
 
-// stoppa katten om stunned
-if (cat.stunnedUntil && Date.now() < cat.stunnedUntil) {
-  // katten rör sig inte
-} else {
-  cat.x += cat.speed;
+// Kattens AI
+if (!(cat.stunnedUntil && Date.now() < cat.stunnedUntil)) {
+  const catCenterX = cat.x + cat.w / 2;
+  const playerCenterX = player.x + player.w / 2;
+
+  // Rörelse på marken
+  if (cat.onGround) {
+    if (catCenterX < playerCenterX - 5) {
+      cat.x += cat.speed;
+    } else if (catCenterX > playerCenterX + 5) {
+      cat.x -= cat.speed;
+    }
+
+    // Hopplogik
+    const horizontalDistance = Math.abs(catCenterX - playerCenterX);
+    const verticalDifference = player.y - cat.y;
+
+    if (
+      horizontalDistance < 150 && // nära horisontellt
+      verticalDifference < -50    // spelaren ovanför
+    ) {
+      cat.vy = -15; 
+      cat.vx = (playerCenterX > catCenterX) ? 4 : -4; // fart åt rätt håll
+      cat.onGround = false;
+    }
+  }
 }
+
+// Om katten är i luften
+if (!cat.onGround) {
+  cat.x += cat.vx; // rörelse i luften
+}
+
+// Gravitation
+cat.vy += gravity;
+cat.y += cat.vy;
+
+// Kollision med marken
+const groundLevel = c.height - 50;
+if (cat.y + cat.h >= groundLevel) {
+  cat.y = groundLevel - cat.h;
+  cat.vy = 0;
+  cat.vx = 0; // stoppa fart när den landar
+  cat.onGround = true;
+}
+
+
+
 
       // Cat blinking
       if (blinking) {
