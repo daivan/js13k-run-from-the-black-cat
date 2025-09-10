@@ -29,7 +29,7 @@ b.buffer=p;b.connect(zzfxX.destination);b.start()}
 // === GAME STATE ===
 // ================================
 let day = true;
-let timer = 10000;        // Start timer
+let timer = 15000;        // Start timer
 let dayLength = 30000;
 let nightLength = 30000;
 
@@ -172,31 +172,31 @@ let lastTime = 0;                               // for dt calculation
 // ================================
 // (x,y,w,h)
 let signs = [
-  {x: 300, y: 180, text: "Press A/D to move"},
-  {x: 600, y: 180, text: "Press W to jump"},
-  {x: 900, y: 180, text: "Press SPACE to interact"},
-  {x: 1300, y: 180, text: "Break stones to progress"}
+  {x: 400, y: 180, text: "Press A/D to move"},
+  {x: 1150, y: 180, text: "Press W to jump"},
+  {x: 4000, y: 180, text: "Press SPACE to break the stone"}
 ];
 
 let blocks = [
   {x:0, y:350, w:50000, h:50},   // ground
 
   // night 1
-  {x:500, y:280, w:100, h:20},  // small platform
-  {x:650, y:240, w:100, h:20},  // small platform
-  {x:800, y:200, w:100, h:20},  // small platform
-  {x:950, y:160, w:100, h:20},  // small platform
-  {x:1100, y:140, w:100, h:1000},  // small platform
+  {x:1000, y:280, w:100, h:20},  // small platform
 
-  {x:1300, y:0, w:20, h:300},  // Vertical bar
+  {x:1150, y:240, w:100, h:20},  // small platform
+  {x:1300, y:200, w:100, h:20},  // small platform
+  {x:1450, y:160, w:100, h:20},  // small platform
+  {x:1600, y:140, w:100, h:1000},  // small platform
 
-  {x:1300, y:280, w:750, h:20},  // small platform
-  {x:1400, y:210, w:750, h:20},  // small platform
-  {x:1300, y:140, w:750, h:20},  // small platform
-  {x:1400, y:70, w:750, h:20},  // small platform
-  {x:1300, y:0, w:750, h:20},  // small platform
+  {x:1800, y:0, w:20, h:300},  // Vertical bar
 
-  {x:2100, y:70, w:100, h:1000},  // Vertical bar
+  {x:1800, y:280, w:750, h:20},  // small platform
+  {x:1900, y:210, w:750, h:20},  // small platform
+  {x:1800, y:140, w:750, h:20},  // small platform
+  {x:1900, y:70, w:750, h:20},  // small platform
+  {x:1800, y:0, w:750, h:20},  // small platform
+
+  {x:2600, y:70, w:100, h:1000},  // Vertical bar
   /*
   
 
@@ -213,7 +213,7 @@ let blocks = [
 // === STONES ===
 // ================================
 let stones = [
-  {x:3500, y:200, w:100, h:150, hp:20}
+  {x:4000, y:200, w:100, h:150, hp:30}
 ];
 
 // ================================
@@ -221,22 +221,15 @@ let stones = [
 // ================================
 let trees = [
   // 2300 till 3500
-  { x: 2520,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
-  { x: 2575,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
-  { x: 2630,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
-  { x: 2600,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
-  { x: 2700,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
-  { x: 2750,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
-  { x: 2790,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
-  { x: 3000,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
-  { x: 3100,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
-  { x: 3140,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
-  { x: 3180,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 3020,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 3075,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
   { x: 3200,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
-  { x: 3220,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
-  { x: 3260,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
-  { x: 3300,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
-  { x: 3310,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 3500,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 3600,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 3680,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 3700,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 3720,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 3810,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
 ];
 
 // ================================
@@ -271,15 +264,6 @@ document.addEventListener("keydown", e => {
       craftingQueue = null;
     } else if (craftingOpen) {
       craftingOpen = false;
-    }
-  }
-});
-
-
-document.addEventListener("keydown", e => {
-  if (gameState === "howToPlay") {
-    if (e.key === "Enter") {
-      gameState = "startMenu";
     }
   }
 });
@@ -421,32 +405,13 @@ const ClickToStartTextHovering =
 ctx.fillStyle = ClickToStartTextHovering ? "yellow" : "white";
 ctx.fillText(ClickToStartText, ClickToStartTextX, ClickToStartTextY);
   
-  const text = "How to Play";
-  const textWidth = ctx.measureText(text).width;
-  const textX = 20;
-  const textY = c.height - 20;
 
-  // check hover
-  const hovering = mouse.x >= textX && mouse.x <= textX + textWidth &&
-                   mouse.y >= textY - 24 && mouse.y <= textY;
-
-  // rita
-  ctx.textAlign = "left";
-  ctx.textBaseline = "bottom";
-  ctx.fillStyle = hovering ? "yellow" : "white"; // 🔥 highlight
-  ctx.fillText(text, textX, textY);
 
 // kolla klick
 c.addEventListener("click", e => {
   if (gameState === "startMenu") {
     const mx = e.offsetX;
     const my = e.offsetY;
-    if (mx >= textX && mx <= textX + textWidth &&
-        my >= textY - 20 && my <= textY) {
-      // klickat på "How to Play"
-      gameState = "howToPlay"; 
-    }
-
         // Klick på "Click to Start"
     if (ClickToStartTextHovering) {
       if (zzfxX.state === "suspended") {
@@ -459,9 +424,6 @@ c.addEventListener("click", e => {
 });
 }
 
-// ================================
-// === DRAW HOWTOPLAY GAMESTATE ===
-// ================================
 function drawSigns() {
   ctx.font = "16px monospace";
   ctx.textAlign = "center";
@@ -472,35 +434,6 @@ function drawSigns() {
     ctx.fillStyle = "white";
     ctx.fillText(s.text, s.x - camX, s.y - 10);
   }
-}
-
-function drawHowToPlay() {
-  ctx.fillStyle = "black";
-  ctx.fillRect(0, 0, c.width, c.height);
-
-  ctx.fillStyle = "red";
-  ctx.font = "40px monospace";
-  ctx.textAlign = "center";
-  ctx.fillText("How to Play", c.width / 2, 100);
-
-  ctx.fillStyle = "white";
-  ctx.font = "20px monospace";
-  ctx.textAlign = "left";
-
-  const lines = [
-    "Move: WASD",
-    "Interact: SPACE",
-    "Craft: C",
-    "Survive as long as you can!"
-  ];
-
-  lines.forEach((line, i) => {
-    ctx.fillText(line, c.width / 2 - 100, 160 + i * 40);
-  });
-
-  ctx.textAlign = "center";
-  ctx.fillStyle = "yellow";
-  ctx.fillText("Press ENTER to go back", c.width / 2, c.height - 80);
 }
 
 // ================================
@@ -835,10 +768,6 @@ function loop() {
     drawStartMenu();
   }
 
-  if (gameState === "howToPlay") {
-    drawHowToPlay();
-  }
-
   // Game over state
   if (gameState === "gameOver") {
     drawGameOver();
@@ -1150,6 +1079,18 @@ if (cat.y + cat.h >= groundLevel) {
         if (craftingQueue.recipe.name === "Pick Axe +2") {
           stoneDamage = 4;
         }
+
+        // 🟢 Nytt: Om man bygger en bro, lägg till block
+        if (craftingQueue.recipe.name === "Bridge") {
+          // Lägg blocket precis framför spelaren
+          blocks.push({
+            x: player.x + player.w + 10, // lite framför
+            y: player.y + player.h - 10,      // lite ovanför marken
+            w: 100,
+            h: 20
+          });
+        }
+        
         // ge spelaren saken (lägg till i inventory)
         let name = craftingQueue.recipe.name.toLowerCase();
         inventory[name] = (inventory[name] || 0) + 1;
