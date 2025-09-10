@@ -174,11 +174,13 @@ let lastTime = 0;                               // for dt calculation
 let signs = [
   {x: 400, y: 180, text: "Press A/D to move"},
   {x: 1150, y: 180, text: "Press W to jump"},
-  {x: 4000, y: 180, text: "Press SPACE to break the stone"}
+  {x: 4000, y: 180, text: "Press SPACE to break the stone"},
+  {x: 5000, y: 180, text: "Press C to craft a bridge"}
 ];
 
 let blocks = [
-  {x:0, y:350, w:50000, h:50},   // ground
+  {x:0, y:350, w:5000, h:50},   // ground
+  {x:5150, y:350, w:5000, h:50},   // ground
 
   // night 1
   {x:1000, y:280, w:100, h:20},  // small platform
@@ -226,10 +228,17 @@ let trees = [
   { x: 3200,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
   { x: 3500,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
   { x: 3600,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
-  { x: 3680,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
   { x: 3700,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
-  { x: 3720,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
   { x: 3810,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+
+
+  { x: 4020,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 4075,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 4200,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 4500,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 4600,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 4700,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 4810,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
 ];
 
 // ================================
@@ -785,6 +794,11 @@ function loop() {
       } else {
         playNightMusic();
       }
+    }
+
+    // Kolla om spelaren ramlat ner eller hamnat för långt åt höger
+    if (player.y > c.height + 200 || player.x > c.width + camX + 200) {
+      gameState = "gameOver";
     }
 
     if (interactCooldown > 0) interactCooldown -= 16;
