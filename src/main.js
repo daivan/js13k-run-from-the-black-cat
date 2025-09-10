@@ -199,17 +199,23 @@ let blocks = [
   {x:1800, y:0, w:750, h:20},  // small platform
 
   {x:2600, y:70, w:100, h:1000},  // Vertical bar
-  /*
-  
-
-  {x:300, y:300, w:100, h:20},  // small platform
-  {x:500, y:250, w:100, h:20},  // higher platform
-  {x:800, y:300, w:150, h:20},  // another platform
-  {x:1200, y:300, w:100, h:20},  // another platform
-  {x:2200, y:250, w:50, h:20},  // another platform
-  {x:2200, y:250, w:150, h:20},  // another platform
-  */
 ];
+
+
+let collectibles = [
+  { x: 500, y: 350, collected: false },
+  { x: 1000, y: 350, collected: false },
+  { x: 1500, y: 350, collected: false },
+  { x: 2000, y: 350, collected: false },
+  { x: 2500, y: 350, collected: false },
+  { x: 3000, y: 350, collected: false },
+  { x: 3500, y: 350, collected: false },
+  { x: 4000, y: 350, collected: false },
+  { x: 4500, y: 350, collected: false },
+  { x: 4800, y: 350, collected: false }
+];
+
+let collectedCount = 0;
 
 // ================================
 // === STONES ===
@@ -217,6 +223,15 @@ let blocks = [
 let stones = [
   {x:4000, y:200, w:100, h:150, hp:30}
 ];
+
+// === stopp block ===
+let stopBlocks = [
+  { x: 3000, y: 300, w: 50, h: 200, required: 5 },  // försvinner vid 5
+  { x: 5000, y: 300, w: 50, h: 200, required: 10 }  // försvinner vid 10
+];
+// lägg till stopBlocks i blocks
+stopBlocks.forEach(b => blocks.push(b));
+
 
 // ================================
 // === TREES (no collision) ===
@@ -609,7 +624,16 @@ function drawInventory() {
   });
 }
 
-
+function drawCollectables() {
+  collectibles.forEach(c => {
+    if (!c.collected) {
+      ctx.fillStyle = "yellow";
+      ctx.beginPath();
+      ctx.arc(c.x - camX, c.y, 10, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+}
 
 function drawTrees() {
   for (const t of trees) {
@@ -1121,6 +1145,8 @@ if (cat.y + cat.h >= groundLevel) {
 
     drawTrees(); 
 
+    drawCollectables(); 
+
     drawCat();
 
     drawPlayer();
@@ -1140,6 +1166,23 @@ if (cat.y + cat.h >= groundLevel) {
 
     // 🔥 debug overlay
     drawDebug();
+
+    collectibles.forEach(c => {
+      if (!c.collected &&
+          player.x < c.x + 10 && player.x + player.w > c.x - 10 &&
+          player.y < c.y + 10 && player.y + player.h > c.y - 10) {
+        c.collected = true;
+        collectedCount++;
+        console.log("Collected:", collectedCount);
+
+        stopBlocks.forEach(block => {
+          if (collectedCount >= block.required) {
+            // ta bort blocket från blocks[]
+            blocks = blocks.filter(b => b !== block);
+          }
+        });
+      }
+    });
 
     if (craftingMessage) {
       ctx.fillStyle = "red";
