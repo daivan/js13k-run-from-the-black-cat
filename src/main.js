@@ -40,15 +40,15 @@ const maxDistance = 5000;
 
 let craftingOpen = false;
 let craftingRecipes = [
-  { name: "Trap", cost: { wood: 3, stone: 1 }, time: 3 },
-  { name: "Wall", cost: { wood: 5, stone: 0 }, time: 5 },
-  { name: "Bridge", cost: { wood: 2, stone: 2 }, time: 4 },
-  { name: "Torch", cost: { wood: 1, stone: 0 }, time: 1 },
-  { name: "Cat Repeller", cost: { wood: 4, stone: 4 }, time: 10 },
-  { name: "Door", cost: { wood: 2, stone: 1 }, time: 2 },
-  { name: "Chest", cost: { wood: 6, stone: 0 }, time: 6 },
-  { name: "Tower", cost: { wood: 3, stone: 3 }, time: 8 },
-  { name: "Spike Pit", cost: { wood: 0, stone: 5 }, time: 7 }
+  { name: "Axe", cost: { wood: 3, stone: 0 }, time: 3 },
+  { name: "Pick Axe", cost: { wood: 5, stone: 0 }, time: 5 },
+  { name: "Trap", cost: { wood: 2, stone: 0 }, time: 5 },
+  { name: "Axe +1", cost: { wood: 10, stone: 1 }, time: 1 },
+  { name: "Pick Axe +1", cost: { wood: 4, stone: 4 }, time: 10 },
+  { name: "Bridge", cost: { wood: 5, stone: 0 }, time: 2 },
+  { name: "Axe +2", cost: { wood: 20, stone: 5 }, time: 6 },
+  { name: "Pick Axe +2", cost: { wood: 3, stone: 3 }, time: 8 },
+  { name: "Trap +2", cost: { wood: 8, stone: 0 }, time: 2 }
 ];
 let craftingQueue = null; 
 
@@ -63,6 +63,9 @@ let player = {
    vy:0,
    onGround:false
 };
+woodDamage = 1;
+stoneDamage = 1;
+
 const speed = 3;
 let interactCooldown = 0; // ms-ish i din nuvarande 16ms-loop
 
@@ -168,6 +171,13 @@ let lastTime = 0;                               // for dt calculation
 // === MAP ===
 // ================================
 // (x,y,w,h)
+let signs = [
+  {x: 300, y: 180, text: "Press A/D to move"},
+  {x: 600, y: 180, text: "Press W to jump"},
+  {x: 900, y: 180, text: "Press SPACE to interact"},
+  {x: 1300, y: 180, text: "Break stones to progress"}
+];
+
 let blocks = [
   {x:0, y:350, w:50000, h:50},   // ground
 
@@ -452,6 +462,18 @@ c.addEventListener("click", e => {
 // ================================
 // === DRAW HOWTOPLAY GAMESTATE ===
 // ================================
+function drawSigns() {
+  ctx.font = "16px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+
+  for (let s of signs) {
+    // Text ovanför skylten
+    ctx.fillStyle = "white";
+    ctx.fillText(s.text, s.x - camX, s.y - 10);
+  }
+}
+
 function drawHowToPlay() {
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, c.width, c.height);
@@ -609,7 +631,10 @@ function drawInventory() {
 
   const slotSize = 40;
   const spacing = 6;
-  const keys = Object.keys(inventory);
+
+  // 🔥 Bara keys som har mer än 0
+  const keys = Object.keys(inventory).filter(key => inventory[key] > 0);
+
   const totalWidth = keys.length * (slotSize + spacing) - spacing;
   const startX = (c.width - totalWidth) / 2;
   const y = c.height - slotSize - 10;
@@ -641,6 +666,7 @@ function drawInventory() {
     ctx.fillText(inventory[key], x + slotSize - 3, y + slotSize - 3);
   });
 }
+
 
 
 function drawTrees() {
@@ -930,7 +956,7 @@ if (keys[" "] && interactCooldown <= 0) {
           player.y + player.h > s.y - reach &&
           player.y < s.y + s.h + reach) {
         if (s.hp > 0) {
-          s.hp--;
+          s.hp = s.hp - stoneDamage;
           s.hitCooldown = 10; // valfritt: liten visuell feedback du ev. redan använder
           didHit = true;
           if (s.hp <= 0) {
@@ -954,7 +980,7 @@ if (keys[" "] && interactCooldown <= 0) {
           player.y + player.h > t.y - reach &&
           player.y < t.y + t.h + reach) {
         if (t.hp > 0) {
-          t.hp--;
+          t.hp = t.hp - woodDamage;
           didHit = true;
           if (t.hp <= 0) {
             console.log('added to inventory')
@@ -1090,12 +1116,40 @@ if (cat.y + cat.h >= groundLevel) {
     camX = player.x - c.width/2;
     if (camX < 0) camX = 0;
 
-
+    /*
+      { name: "Axe", cost: { wood: 3, stone: 0 }, time: 3 },
+  { name: "Pick Axe", cost: { wood: 5, stone: 0 }, time: 5 },
+  { name: "Trap", cost: { wood: 2, stone: 0 }, time: 5 },
+  { name: "Axe +1", cost: { wood: 10, stone: 1 }, time: 1 },
+  { name: "Pick Axe +1", cost: { wood: 4, stone: 4 }, time: 10 },
+  { name: "Bridge", cost: { wood: 5, stone: 0 }, time: 2 },
+  { name: "Axe +2", cost: { wood: 20, stone: 5 }, time: 6 },
+  { name: "Pick Axe +2", cost: { wood: 3, stone: 3 }, time: 8 },
+  { name: "Trap +2", cost: { wood: 8, stone: 0 }, time: 2 }
+*/
     if (craftingQueue) {
       
       craftingQueue.timeLeft -= 1/60; // om loopen körs 60fps
       if (craftingQueue.timeLeft <= 0) {
         console.log("klar:", craftingQueue.recipe.name);
+        if (craftingQueue.recipe.name === "Axe") {
+          woodDamage = 2;
+        }
+        if (craftingQueue.recipe.name === "Axe +1") {
+          woodDamage = 3;
+        }
+        if (craftingQueue.recipe.name === "Axe +2") {
+          woodDamage = 4;
+        }
+        if (craftingQueue.recipe.name === "Pick Axe") {
+          stoneDamage = 2;
+        }
+        if (craftingQueue.recipe.name === "Pick Axe +1") {
+          stoneDamage = 3;
+        }
+        if (craftingQueue.recipe.name === "Pick Axe +2") {
+          stoneDamage = 4;
+        }
         // ge spelaren saken (lägg till i inventory)
         let name = craftingQueue.recipe.name.toLowerCase();
         inventory[name] = (inventory[name] || 0) + 1;
@@ -1126,6 +1180,8 @@ if (cat.y + cat.h >= groundLevel) {
     drawCrafting();
 
     drawCraftingProgress();
+
+    drawSigns();
 
     // 🔥 debug overlay
     drawDebug();
