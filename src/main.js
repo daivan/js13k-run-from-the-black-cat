@@ -35,20 +35,15 @@ let nightLength = 30000;
 
 let gravity = 0.3;
 let camX = 0;
-let gameState = "playing"; // "startMenu", "playing", "gameOver", "win"
+let gameState = "startMenu"; // "startMenu", "playing", "gameOver", "win"
 const maxDistance = 5000;
 
 let craftingOpen = false;
 let craftingRecipes = [
   { name: "Axe", cost: { wood: 3, stone: 0 }, time: 3 },
-  { name: "Pick Axe", cost: { wood: 5, stone: 0 }, time: 5 },
-  { name: "Trap", cost: { wood: 2, stone: 0 }, time: 5 },
-  { name: "Axe +1", cost: { wood: 10, stone: 1 }, time: 1 },
-  { name: "Pick Axe +1", cost: { wood: 4, stone: 4 }, time: 10 },
-  { name: "Bridge", cost: { wood: 5, stone: 0 }, time: 2 },
-  { name: "Axe +2", cost: { wood: 20, stone: 5 }, time: 6 },
-  { name: "Pick Axe +2", cost: { wood: 3, stone: 3 }, time: 8 },
-  { name: "Trap +2", cost: { wood: 8, stone: 0 }, time: 2 }
+  { name: "Pick Axe", cost: { wood: 5, stone: 2 }, time: 5 },
+  { name: "Trap", cost: { wood: 2, stone: 1 }, time: 5 },
+  { name: "Bridge", cost: { wood: 3, stone: 0 }, time: 5 },
 ];
 let craftingQueue = null; 
 
@@ -174,17 +169,22 @@ let lastTime = 0;                               // for dt calculation
 let signs = [
   {x: 400, y: 180, text: "Press A/D to move"},
   {x: 1150, y: 180, text: "Press W to jump"},
+  {x: 1650, y: 180, text: "Safe pillar"},
   {x: 4000, y: 180, text: "Press SPACE to break the stone"},
-  {x: 5000, y: 180, text: "Press C to craft a bridge"}
+  {x: 5000, y: 180, text: "Press C to craft a bridge"},
+  {x: 7500, y: 180, text: "Collect 5 blue orbs to pass"},
+  {x: 10000, y: 180, text: "You made it! Congrats!"},
 ];
 
 let blocks = [
   {x:0, y:350, w:5000, h:50},   // ground
-  {x:5150, y:350, w:5000, h:50},   // ground
+  {x:5150, y:350, w:2850, h:50},   // ground
+  {x:8150, y:350, w:350, h:50},   // ground
+  {x:8650, y:350, w:350, h:50},   // ground
+  {x:9150, y:350, w:10000, h:50},   // ground
 
   // night 1
   {x:1000, y:280, w:100, h:20},  // small platform
-
   {x:1150, y:240, w:100, h:20},  // small platform
   {x:1300, y:200, w:100, h:20},  // small platform
   {x:1450, y:160, w:100, h:20},  // small platform
@@ -199,20 +199,40 @@ let blocks = [
   {x:1800, y:0, w:750, h:20},  // small platform
 
   {x:2600, y:70, w:100, h:1000},  // Vertical bar
+
+  {x:5500, y:280, w:100, h:20},  // small platform
+  {x:5650, y:240, w:100, h:20},  // small platform
+  {x:5800, y:200, w:100, h:20},  // small platform
+  {x:5950, y:160, w:100, h:20},  // small platform
+  {x:6100, y:120, w:100, h:20},  // small platform
+  {x:6100, y:30, w:100, h:20},  // small platform
+  {x:6100, y:280, w:100, h:20},  // small platform
+  {x:6250, y:80, w:100, h:20},  // small platform
+  {x:6250, y:160, w:100, h:20},  // small platform
+  {x:6400, y:30, w:100, h:20},  // small platform
+  {x:6400, y:120, w:100, h:20},  // small platform
+  {x:6550, y:160, w:100, h:20},  // small platform
+  {x:6700, y:200, w:100, h:20},  // small platform
+  {x:6850, y:240, w:100, h:20},  // small platform
+  {x:7000, y:280, w:100, h:20},  // small platform
 ];
 
+// === stopp block ===
+let stopBlocks = [
+  { x: 7500, y: 100, w: 50, h: 300, required: 5 },  // försvinner vid 5
+//  { x: 5000, y: 300, w: 50, h: 200, required: 10 }  // försvinner vid 10
+];
+// lägg till stopBlocks i blocks
+stopBlocks.forEach(b => blocks.push(b));
 
 let collectibles = [
-  { x: 500, y: 350, collected: false },
-  { x: 1000, y: 350, collected: false },
-  { x: 1500, y: 350, collected: false },
-  { x: 2000, y: 350, collected: false },
-  { x: 2500, y: 350, collected: false },
-  { x: 3000, y: 350, collected: false },
-  { x: 3500, y: 350, collected: false },
-  { x: 4000, y: 350, collected: false },
-  { x: 4500, y: 350, collected: false },
-  { x: 4800, y: 350, collected: false }
+  { x: 1580, y: 340, collected: false },
+  { x: 2710, y: 340, collected: false },
+  { x: 5800, y: 340, collected: false },
+  { x: 6100, y: 10, collected: false },
+  { x: 6300, y: 340, collected: false },
+  { x: 6470, y: 10, collected: false },
+  { x: 6440, y: 90, collected: false },
 ];
 
 let collectedCount = 0;
@@ -221,16 +241,12 @@ let collectedCount = 0;
 // === STONES ===
 // ================================
 let stones = [
-  {x:4000, y:200, w:100, h:150, hp:30}
+  {x:4000, y:200, w:100, h:150, hp:30},
+  {x:8200, y:200, w:100, h:150, hp:30},
+  {x:8700, y:200, w:100, h:150, hp:30},
+  {x:9300, y:200, w:100, h:150, hp:30},
 ];
 
-// === stopp block ===
-let stopBlocks = [
-  { x: 3000, y: 300, w: 50, h: 200, required: 5 },  // försvinner vid 5
-  { x: 5000, y: 300, w: 50, h: 200, required: 10 }  // försvinner vid 10
-];
-// lägg till stopBlocks i blocks
-stopBlocks.forEach(b => blocks.push(b));
 
 
 // ================================
@@ -238,6 +254,7 @@ stopBlocks.forEach(b => blocks.push(b));
 // ================================
 let trees = [
   // 2300 till 3500
+  { x: 1500,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
   { x: 3020,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
   { x: 3075,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
   { x: 3200,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
@@ -246,14 +263,32 @@ let trees = [
   { x: 3700,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
   { x: 3810,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
 
-
-  { x: 4020,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
-  { x: 4075,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
   { x: 4200,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
   { x: 4500,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
   { x: 4600,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
   { x: 4700,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
-  { x: 4810,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+
+  { x: 5200,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 5300,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 5350,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 5450,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 5550,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+
+  { x: 5700,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 5790,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 5850,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+
+  { x: 6150,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 6240,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 6880,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+
+  { x: 7050,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 7250,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 7350,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+
+  { x: 7050,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 7250,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
+  { x: 7350,  y: 350-60, w: 22, h: 60, hp: 10, maxHp: 10 },
 ];
 
 // ================================
@@ -267,13 +302,6 @@ let traps = [];
 let keys = {};
 onkeydown = e => keys[e.key] = true;
 onkeyup   = e => keys[e.key] = false;
-
-document.addEventListener("keydown", e => {
-  if (day && e.key === "f") {
-    // lägg fälla på spelarens position (på marken)
-    traps.push({ x: player.x, y: c.height - 60, w: 15, h: 15, active: true });
-  }
-});
 
 document.addEventListener("keydown", e => {
   if (e.code === "KeyC") {
@@ -461,6 +489,23 @@ function drawSigns() {
 }
 
 // ================================
+// === DRAW WIN BLOCKS ===
+// ================================
+function drawWin() {
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, c.width, c.height);
+
+  ctx.fillStyle = "yellow";
+  ctx.font = "40px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("YOU WIN!", c.width/2, c.height/2);
+
+  ctx.font = "20px monospace";
+  ctx.fillText("Press F5 to restart", c.width/2, c.height/2 + 50);
+}
+
+// ================================
 // === DRAW PLAYING GAMESTATE ===
 // ================================
 function drawDebug() {
@@ -469,6 +514,22 @@ function drawDebug() {
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   ctx.fillText(`x: ${Math.floor(player.x)} y: ${Math.floor(player.y)}`, 10, 10);
+}
+
+// Ritas i din drawUI eller där du ritar HUD-element
+function drawOrbCount() {
+  if (collectedCount <= 0) return; // Rita inget om man inte har några orbs
+
+  ctx.font = "20px monospace";
+  ctx.fillStyle = "cyan";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+
+  // Sätt position precis under timern (t.ex. 30px nedanför)
+  const x = 20;
+  const y = 60; // justera beroende på var timern sitter
+
+  ctx.fillText(`Blue Orbs: ${collectedCount}`, x, y);
 }
 
 function drawCrafting() {
@@ -624,10 +685,10 @@ function drawInventory() {
   });
 }
 
-function drawCollectables() {
+function drawCollectibles() {
   collectibles.forEach(c => {
     if (!c.collected) {
-      ctx.fillStyle = "yellow";
+      ctx.fillStyle = "blue";
       ctx.beginPath();
       ctx.arc(c.x - camX, c.y, 10, 0, Math.PI * 2);
       ctx.fill();
@@ -805,6 +866,10 @@ function loop() {
   if (gameState === "gameOver") {
     drawGameOver();
   }
+    // Game over state
+  if (gameState === "win") {
+    drawWin();
+  }
 
   // Playing state
   if (gameState === "playing") {
@@ -834,7 +899,7 @@ function loop() {
       if (keys["a"]) dx -= speed;
       if (keys["d"]) dx += speed;
       if (keys["w"] && player.onGround) {
-        player.vy = -7;
+        player.vy = -7.5;
         player.onGround = false;
       }
   
@@ -993,7 +1058,7 @@ for (let t of traps) {
       cat.y < t.y + t.h &&
       cat.y + cat.h > t.y) {
     t.active = false;                // fällan används upp
-    cat.stunnedUntil = Date.now() + 3000; // katten stannar i 3 sek
+    cat.stunnedUntil = Date.now() + 10000; // katten stannar i 3 sek
   }
 }
 // Se till att katten har vx
@@ -1036,13 +1101,15 @@ if (!cat.onGround) {
 cat.vy += gravity;
 cat.y += cat.vy;
 
-// Kollision med marken
-const groundLevel = c.height - 50;
-if (cat.y + cat.h >= groundLevel) {
-  cat.y = groundLevel - cat.h;
-  cat.vy = 0;
-  cat.vx = 0; // stoppa fart när den landar
+// Håll katten på marknivå
+const groundLevel = c.height - 40; // Markens Y-position
+if (cat.y + cat.h > groundLevel) {
+  cat.y = groundLevel - cat.h; // Sätt katten på marken
+  cat.vy = 0;                  // Stoppa fall
+  cat.vx = 0;                  // Nollställ horisontell fart efter hopp
   cat.onGround = true;
+} else {
+  cat.onGround = false;
 }
 
 
@@ -1100,22 +1167,10 @@ if (cat.y + cat.h >= groundLevel) {
       if (craftingQueue.timeLeft <= 0) {
         console.log("klar:", craftingQueue.recipe.name);
         if (craftingQueue.recipe.name === "Axe") {
-          woodDamage = 2;
-        }
-        if (craftingQueue.recipe.name === "Axe +1") {
-          woodDamage = 3;
-        }
-        if (craftingQueue.recipe.name === "Axe +2") {
-          woodDamage = 4;
+          woodDamage = 5;
         }
         if (craftingQueue.recipe.name === "Pick Axe") {
-          stoneDamage = 2;
-        }
-        if (craftingQueue.recipe.name === "Pick Axe +1") {
-          stoneDamage = 3;
-        }
-        if (craftingQueue.recipe.name === "Pick Axe +2") {
-          stoneDamage = 4;
+          stoneDamage = 5;
         }
 
         // 🟢 Nytt: Om man bygger en bro, lägg till block
@@ -1126,6 +1181,17 @@ if (cat.y + cat.h >= groundLevel) {
             y: player.y + player.h - 10,      // lite ovanför marken
             w: 100,
             h: 20
+          });
+        }
+        
+         // 🟢 Bygg fälla
+        if (craftingQueue.recipe.name === "Trap") {
+          traps.push({
+            x: player.x, 
+            y: c.height - 60, // på marknivå
+            w: 15, 
+            h: 15, 
+            active: true
           });
         }
         
@@ -1145,7 +1211,7 @@ if (cat.y + cat.h >= groundLevel) {
 
     drawTrees(); 
 
-    drawCollectables(); 
+    drawCollectibles(); 
 
     drawCat();
 
@@ -1162,10 +1228,17 @@ if (cat.y + cat.h >= groundLevel) {
 
     drawCraftingProgress();
 
+    drawOrbCount();   
+
     drawSigns();
 
     // 🔥 debug overlay
     drawDebug();
+
+    // I din loop, efter att spelaren rört sig
+    if (player.x >= 10000) {
+      gameState = "win";
+    }
 
     collectibles.forEach(c => {
       if (!c.collected &&
