@@ -482,8 +482,8 @@ function drawSigns() {
   ctx.textBaseline = "bottom";
 
   for (let s of signs) {
-    // Text ovanför skylten
-    ctx.fillStyle = "white";
+    // 🔄 Välj färg beroende på dag/natt
+    ctx.fillStyle = day ? "black" : "white";
     ctx.fillText(s.text, s.x - camX, s.y - 10);
   }
 }
@@ -508,13 +508,6 @@ function drawWin() {
 // ================================
 // === DRAW PLAYING GAMESTATE ===
 // ================================
-function drawDebug() {
-  ctx.font = "12px monospace";
-  ctx.fillStyle = "lime";
-  ctx.textAlign = "left";
-  ctx.textBaseline = "top";
-  ctx.fillText(`x: ${Math.floor(player.x)} y: ${Math.floor(player.y)}`, 10, 10);
-}
 
 // Ritas i din drawUI eller där du ritar HUD-element
 function drawOrbCount() {
@@ -776,8 +769,22 @@ function drawPlayer() {
 }
 
 function drawBackground() {
-  ctx.fillStyle = day ? "#88d" : "#000";
-  ctx.fillRect(0,0,c.width,c.height);
+  let gradient;
+
+  if (day) {
+    // 🌞 Dag-himmel
+    gradient = ctx.createLinearGradient(0, 0, 0, c.height);
+    gradient.addColorStop(0, "#87CEEB"); // ljusblå upptill
+    gradient.addColorStop(1, "#ffffff"); // vit nedtill
+  } else {
+    // 🌙 Natt-himmel
+    gradient = ctx.createLinearGradient(0, 0, 0, c.height);
+    gradient.addColorStop(0, "#0a0a4bff"); // mörkblå upptill
+    gradient.addColorStop(1, "#000000"); // svart nedtill
+  }
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, c.width, c.height);
 }
 
 function drawPlattform() {
@@ -1231,9 +1238,6 @@ if (cat.y + cat.h > groundLevel) {
     drawOrbCount();   
 
     drawSigns();
-
-    // 🔥 debug overlay
-    drawDebug();
 
     // I din loop, efter att spelaren rört sig
     if (player.x >= 10000) {
