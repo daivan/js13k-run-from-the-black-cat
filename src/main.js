@@ -81,11 +81,33 @@ function playDayMusic() {
     window.dayMusicInterval = null;
   }
 
+const dayMelody = [
+  [0.3,0,440,0.1,0.3,0.2],  // A4
+  [0.3,0,494,0.1,0.2,0.1],  // B4
+  [0.3,0,523,0.1,0.2,0.15], // C5
+  [0.3,0,494,0.1,0.2,0.1],  // B4
+  [0.3,0,440,0.1,0.3,0.2],  // A4 (längre sustain)
+  [0.3,0,587,0.1,0.2,0.1],  // D5
+  [0.3,0,659,0.1,0.2,0.15], // E5
+  [0.3,0,587,0.1,0.3,0.15], // D5 (längre sustain)
+  [0.3,0,523,0.1,0.2,0.1],  // C5
+  [0.3,0,494,0.1,0.2,0.1],  // B4
+  [0.3,0,440,0.1,0.3,0.15], // A4
+  [0.3,0,659,0.1,0.2,0.15], // E5
+  [0.3,0,587,0.1,0.2,0.1],  // D5
+  [0.3,0,523,0.1,0.3,0.15], // C5 (längre sustain)
+  [0.3,0,494,0.1,0.2,0.1],  // B4
+  [0.3,0,440,0.1,0.4,0.2]   // A4 (extra lång, leder fint in i loopen)
+];
+  let noteIndex = 0;
+
+  // 🔹 Spela en ton varannan sekund
   window.dayMusicInterval = setInterval(() => {
-    zzfx(...[0.3,0,440,0.05,0.15,0.1,0,0,0,0,0,0,0,0.5]);
-    zzfx(...[0.3,0,660,0.05,0.15,0.1,0,0,0,0,0,0,0,0.5]);
-  }, 800);
+    zzfx(...dayMelody[noteIndex]);
+    noteIndex = (noteIndex + 1) % dayMelody.length; // loopa igenom
+  }, 1000);
 }
+
 
 function playNightMusic() {
   // stoppa dagmusiken om den körs
@@ -99,11 +121,44 @@ function playNightMusic() {
     window.nightMusicInterval = null;
   }
 
+  // 🔹 Mörkare melodi (A-moll känsla)
+const nightMelody = [
+  [0.7,0,220,0.3,0.7,0.25],  // A3
+  [0.7,0,233,0.2,0.6,0.2],   // Bb3 (dissonans)
+  [0.7,0,196,0.3,0.8,0.25],  // G3
+  [0.7,0,370,0.2,0.6,0.2],   // F#4 (tritonus, kusligt)
+  [0.7,0,220,0.25,0.7,0.25], // A3
+  [0.7,0,247,0.2,0.6,0.2],   // B3
+  [0.7,0,311,0.3,0.7,0.25],  // Eb4 (mörk färg)
+  [0.7,0,196,0.25,0.7,0.2]   // G3
+];
+
+  let noteIndex = 0;
+
+  // 🔹 Långsammare tempo än dagmusiken
   window.nightMusicInterval = setInterval(() => {
-    zzfx(...[1,,220,,0.5,0.5,1,,0,,0,,0,0.5]);
-  }, 1200);
+    zzfx(...nightMelody[noteIndex]);
+    noteIndex = (noteIndex + 1) % nightMelody.length;
+  }, 500);
 }
 
+
+// =========================
+// === SFX ===
+// =========================
+let sfxVolume = 0.1; // ändra här för alla effekter
+
+function playJumpSound() {
+  zzfx(...[sfxVolume,,440,,0.05,0.2,1,1.5,0,0,0,0,0.01]); 
+}
+
+function playHitSound() {
+  zzfx(...[sfxVolume,,80,,0.02,0.05,3,0.5,0,0,0,0,0.01]); 
+}
+
+function playCraftSound() {
+  zzfx(...[sfxVolume,,220,,0.1,0.3,1,1,0,0,0,0,0.02]); 
+}
 
 // =========================
 // === INVENTORY SYSTEM ===
@@ -906,6 +961,7 @@ function loop() {
       if (keys["a"]) dx -= speed;
       if (keys["d"]) dx += speed;
       if (keys["w"] && player.onGround) {
+        playJumpSound();
         player.vy = -7.5;
         player.onGround = false;
       }
@@ -995,6 +1051,7 @@ if (keys[" "] && interactCooldown <= 0) {
           player.y + player.h > s.y - reach &&
           player.y < s.y + s.h + reach) {
         if (s.hp > 0) {
+          playHitSound();
           s.hp = s.hp - stoneDamage;
           s.hitCooldown = 10; // valfritt: liten visuell feedback du ev. redan använder
           didHit = true;
@@ -1019,6 +1076,7 @@ if (keys[" "] && interactCooldown <= 0) {
           player.y + player.h > t.y - reach &&
           player.y < t.y + t.h + reach) {
         if (t.hp > 0) {
+          playHitSound();
           t.hp = t.hp - woodDamage;
           didHit = true;
           if (t.hp <= 0) {
@@ -1169,9 +1227,10 @@ if (cat.y + cat.h > groundLevel) {
   { name: "Trap +2", cost: { wood: 8, stone: 0 }, time: 2 }
 */
     if (craftingQueue) {
-      
+      playCraftSound();
       craftingQueue.timeLeft -= 1/60; // om loopen körs 60fps
       if (craftingQueue.timeLeft <= 0) {
+        
         console.log("klar:", craftingQueue.recipe.name);
         if (craftingQueue.recipe.name === "Axe") {
           woodDamage = 5;
